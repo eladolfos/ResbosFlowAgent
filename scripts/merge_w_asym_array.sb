@@ -1,0 +1,30 @@
+#!/bin/bash --login
+#SBATCH --job-name=w_asym_merge
+#SBATCH --output=slurm_merge_%j.out
+#SBATCH --error=slurm_merge_%j.err
+#SBATCH --time=02:00:00
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=1
+#SBATCH --ntasks=1
+#SBATCH --mem=4G
+#SBATCH --partition=general-long
+
+# Submitted automatically by submit_w_asym_array.sh with
+# --dependency=afterok:<array_job_id>, so this only ever runs once every
+# shard in the array has exited 0. If any shard failed, SLURM marks this
+# job's dependency as never-satisfied and cancels it instead of running it
+# -- check `sacct -j <array_job_id>` for the failing task in that case.
+#
+# Usage: sbatch merge_w_asym_array.sb JOBNAME
+
+cd ${SLURM_SUBMIT_DIR}
+
+JOBNAME=$1
+if [ -z "$JOBNAME" ]; then
+  echo "ERROR: pass the shard JOBNAME as the sbatch script argument, e.g.:"
+  echo "  sbatch merge_w_asym_array.sb E211_w_asym_Wm"
+  exit 1
+fi
+
+echo "Merging shards for $JOBNAME into ${JOBNAME}.out"
+python3 merge_shards.py "$JOBNAME" "${JOBNAME}.out"

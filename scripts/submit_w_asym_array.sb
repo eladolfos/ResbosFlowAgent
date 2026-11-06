@@ -1,0 +1,92 @@
+#!/bin/bash
+# One-shot driver for a sharded w_asym run:
+#   1. Auto-generates the shards (make_shards.py) if they don't exist yet.
+#   2. Submits the shard array job (run_w_asym_array.sb).
+#   3. Submits the merge job (merge_w_asym_array.sb) with
+#      --dependency=afterok:<array_job_id>, so it only runs once every
+#      shard has exited 0 -- if any shard fails, SLURM marks the merge
+#      job's dependency as never-satisfied and cancels it automatically
+#      instead of merging incomplete/missing output.
+#
+# Also routes SLURM's own stdout/stderr log files into
+# <JOBNAME>_shards/slurm_logs/ instead of littering this directory with
+# one .out/.err pair per array task. This has to happen here rather than
+# inside the .sb scripts because #SBATCH --output/--error paths are opened
+# by SLURM before a script's body executes, so the directory must exist at
+# submission time.
+#
+# Usage: ./submit_w_asym_array.sh JOBNAME ARRAY_SPEC
+#   ARRAY_SPEC must be of the form LOW-HIGH or LOW-HIGH%THROTTLE, with
+#   LOW=0 (matches make_shards.py's shard00, shard01, ... numbering).
+#   The shard count (HIGH-LOW+1) is what gets passed to make_shards.py.
+#
+# Example (creates 20 shards from E211_w_asym_Wm.in, runs them, merges them):
+#   ./submit_w_asym_array.sh E211_w_asym_Wm 0-19
+#
+# If the shards already exist (from a previous make_shards.py run) and
+# their count matches ARRAY_SPEC, this reuses them as-is instead of
+# regenerating. To force regeneration, remove <JOBNAME>_shards/ first.
+
+set -e
+
+JOBNAME=$1
+ARRAY_SPEC=$2
+
+if [ -z "$JOBNAME" ] || [ -z "$ARRAY_SPEC" ]; then
+  echo "Usage: ./submit_w_asym_array.sh JOBNAME ARRAY_SPEC"
+  echo "  e.g. ./submit_w_asym_array.sh E211_w_asym_Wm 0-19"
+  exit 1
+fi
+
+if [[ ! "$ARRAY_SPEC" =~ ^0-([0-9]+)(%[0-9]+)?$ ]]; then
+  echo "ERROR: ARRAY_SPEC '$ARRAY_SPEC' must look like 0-N or 0-N%THROTTLE"
+  echo "  (must start at 0 to line up with make_shards.py's shard numbering)."
+  exit 1
+fi
+N_SHARDS=$((${BASH_REMATCH[1]} + 1))
+
+SHARD_DIR="${JOBNAME}_shards"
+MANIFEST="${SHARD_DIR}/${JOBNAME}_shards.manifest"
+
+if [ -f "$MANIFEST" ]; then
+  EXISTING=$(grep -c . "$MANIFEST")
+  if [ "$EXISTING" -ne "$N_SHARDS" ]; then
+    echo "ERROR: $MANIFEST already has $EXISTING shards, but ARRAY_SPEC"
+    echo "  '$ARRAY_SPEC' implies $N_SHARDS. Remove $SHARD_DIR/ to reshard,"
+    echo "  or fix ARRAY_SPEC to match the existing shard count."
+    exit 1
+  fi
+  echo "Reusing existing $MANIFEST ($EXISTING shards)."
+else
+  BASE_IN="${JOBNAME}.in"
+  if [ ! -f "$BASE_IN" ]; then
+    echo "ERROR: no shards found and no $BASE_IN to shard from."
+    echo "  Either create $BASE_IN, or run make_shards.py yourself with a"
+    echo "  different base .in file and rerun this script."
+    exit 1
+  fi
+  echo "No shards found -- generating $N_SHARDS shards from $BASE_IN..."
+  python3 make_shards.py "$BASE_IN" "$JOBNAME" "$N_SHARDS"
+fi
+
+LOG_DIR="${SHARD_DIR}/slurm_logs"
+mkdir -p "$LOG_DIR"
+
+SUBMIT_TS=$(date +%s)   # passed to the merge job so it can log this stage's own duration
+ARRAY_JOBID=$(sbatch --parsable \
+  --array="${ARRAY_SPEC}" \
+  --output="${LOG_DIR}/slurm_shard_%A_%a.out" \
+  --error="${LOG_DIR}/slurm_shard_%A_%a.err" \
+  run_w_asym_array.sb "$JOBNAME")
+echo "Submitted shard array job $ARRAY_JOBID (${N_SHARDS} tasks)."
+
+MERGE_JOBID=$(sbatch --parsable \
+  --dependency=afterok:${ARRAY_JOBID} \
+  --output="${LOG_DIR}/slurm_merge_%j.out" \
+  --error="${LOG_DIR}/slurm_merge_%j.err" \
+  merge_w_asym_array.sb "$JOBNAME" "$SUBMIT_TS")
+echo "Submitted merge job $MERGE_JOBID (runs automatically after $ARRAY_JOBID succeeds)."
+echo ""
+echo "Check progress with:  squeue -u \$USER"
+echo "Check for failures with:  sacct -j ${ARRAY_JOBID} --format=JobID,State,ExitCode"
+echo "Once merged, output lands in: ${JOBNAME}.out"

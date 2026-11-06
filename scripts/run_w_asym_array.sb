@@ -1,0 +1,80 @@
+#!/bin/bash --login
+#SBATCH --job-name=w_asym_shard
+#SBATCH --output=slurm_shard_%A_%a.out
+#SBATCH --error=slurm_shard_%A_%a.err
+#SBATCH --time=24:00:00                   # Per-shard walltime; tune after timing the first shard(s)
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=1                # w_asym.f is serial, no OpenMP/MPI in the source
+#SBATCH --ntasks=1
+#SBATCH --mem-per-cpu=8G
+#SBATCH --partition=general-long
+
+# Usage (preferred): ./submit_w_asym_array.sh <JOBNAME> 0-N
+# That wrapper creates <JOBNAME>_shards/slurm_logs/ and routes SLURM's own
+# stdout/stderr there instead of the --output/--error defaults above. SLURM
+# opens --output/--error before this script's body runs, so the directory
+# has to exist at submission time -- this script can't create it itself.
+#
+# Direct invocation still works (falls back to the --output/--error above,
+# landing in this directory):
+#   sbatch --array=0-N run_w_asym_array.sb <JOBNAME>
+# where <JOBNAME> matches what was passed to make_shards.py, and the
+# manifest file <JOBNAME>_shards/<JOBNAME>_shards.manifest (written by
+# make_shards.py) lives in the submission directory.
+
+cd ${SLURM_SUBMIT_DIR}
+
+JOBNAME=$1
+if [ -z "$JOBNAME" ]; then
+  echo "ERROR: pass the shard JOBNAME as the sbatch script argument, e.g.:"
+  echo "  sbatch --array=0-19 run_w_asym_array.sb E211_w_asym_Wm"
+  exit 1
+fi
+
+SHARD_DIR="${JOBNAME}_shards"
+MANIFEST="${SHARD_DIR}/${JOBNAME}_shards.manifest"
+if [ ! -f "$MANIFEST" ]; then
+  echo "ERROR: manifest $MANIFEST not found. Run make_shards.py first."
+  exit 1
+fi
+
+# Line N of the manifest (1-indexed) corresponds to array task N-1
+LINE=$(sed -n "$((SLURM_ARRAY_TASK_ID + 1))p" "$MANIFEST")
+if [ -z "$LINE" ]; then
+  echo "ERROR: no manifest entry for array task $SLURM_ARRAY_TASK_ID"
+  exit 1
+fi
+SHARD_NAME=$(echo "$LINE" | cut -f1)
+
+module purge
+module load GCC/13.2.0 OpenMPI/4.1.6-GCC-13.2.0 powertools
+
+export PATH=/mnt/home/lopezels/InstallSources/LHAPDF/bin:$PATH
+export LD_LIBRARY_PATH=/mnt/home/lopezels/InstallSources/LHAPDF/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/mnt/home/lopezels/InstallSources/HOPPET1/lib:$LD_LIBRARY_PATH
+
+LOG_FILE="${SHARD_DIR}/w_asym_output_${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}.log"
+
+START_TIME=$(date)
+SECONDS=0
+echo "==========================================================" | tee -a $LOG_FILE
+echo "Shard: $SHARD_NAME  (array task $SLURM_ARRAY_TASK_ID)" | tee -a $LOG_FILE
+echo "Job execution started at: $START_TIME" | tee -a $LOG_FILE
+echo "==========================================================" | tee -a $LOG_FILE
+
+srun ./w_asym "$SHARD_NAME" >> $LOG_FILE 2>&1
+EXIT_CODE=$?
+
+duration=$SECONDS
+hours=$((duration / 3600))
+minutes=$(((duration % 3600) / 60))
+seconds=$((duration % 60))
+END_TIME=$(date)
+
+echo "==========================================================" | tee -a $LOG_FILE
+echo "Job execution finished at: $END_TIME" | tee -a $LOG_FILE
+echo "Total computation time: ${hours}h ${minutes}m ${seconds}s" | tee -a $LOG_FILE
+echo "Shard $SHARD_NAME finished with exit code $EXIT_CODE" | tee -a $LOG_FILE
+echo "==========================================================" | tee -a $LOG_FILE
+
+exit $EXIT_CODE

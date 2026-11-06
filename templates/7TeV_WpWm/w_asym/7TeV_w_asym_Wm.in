@@ -1,0 +1,22 @@
+7000, 1,1                                    > ECM,iBeam=-1,1:ppB/pp, KinCorr=0/1
+-1,1                                            > JWTYPE(jwm,jwp,jz,jph,JHB/-1,1,2,3,4),JZ_TYPE(1,-1,0; for ZU, ZD, Z0)
+0,2,1,1,1                                    > iset, norder (1 or 2), muR/Q, muF/Q (1.0,0.5,0.25,2.0), iscale(0=Q,1=MT)
+lha_CT25NNLO                                 > PDF file name
+./inp/q_grid.inp                             > Q grid file name
+./inp/qt_grid.inp                            > qT grid file name
+./inp/y_grid.inp                             > y grid file name
+1  153  1   1  143  1  1 80  1               > Active setting (full range, matches legacy grid)
+1  153  1   1  143  1  1 80  1               > Full range
+QT_______   y_______   Q______
+
+
+======== dummy ====
+JZ_TYPE(1,-1,0) for Boson=ZU, ZD, Z0
+
+2,0,1                                      > JWTYPE(jwm,jwp,jz,jph,JHB/-1,1,2,3,4),JZ_TYPE(1,-1,0; for ZU, ZD, Z0)
+2,0,-1                                     > JWTYPE(jwm,jwp,jz,jph,JHB/-1,1,2,3,4),JZ_TYPE(1,-1,0; for ZU, ZD, Z0)
+
+1  105  1   12 132 12  1 7  2             > Active setting
+1  105  1   12 132 60  1 7  6             > Active setting
+1  105  50  12 132 60  1 5  4             > Active setting
+24  27  1      72 72 1    5 5  1             > Active setting

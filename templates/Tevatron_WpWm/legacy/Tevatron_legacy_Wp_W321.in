@@ -1,0 +1,108 @@
+-1,0.d0,1,0                                        > iBeam=-2/-1/0/1:PiN/ppB/pN/pp,FRACT_N,KinCorr,ResumType
+1960.0,3,0                                        > ECM,LTO=-1/0/1/2/3:LO/CSS/DelSig/Asympt/Y,iFast
+172., 80.385, 91.1876, 125, 0                     > t,W,Z,h,photon masses (as of 1/1/97)
+W+                                                > Type_V
+0,2,1,2                                           > ISTR,iPionPDF, i_RunMass,i_Model
+CSS                                               > CSS or CFG
+5,99,1,1,1                                        > iNONPERT, IFLAG_C3, C1/B0, C2, C3/B0 (C_{1,2,3} are used only for IFLAG_C3=99, otherwise. B0=2.0D0*DEXP(-EULER) )
+3,2,1,0,2                                         > Order of Sudakov A, B, CFns, i_FSR(final state raditation), DelSigOrder
+1,1,1                                             > iscale (scale for the pert. calc., iscale=0, mu=Q; iscale=1, mu=MT), , muR/mu, muF/mu
+lha_CT25NNLO                                      > Evolved PDF file
+0.06983d0,0.06984d0,0.15d0,1.3d0,4.75d0           > Quark masses
+0.5                                               > bMax (b0 = 1.12291897 )
+0                                                 > iProc=0/1/2:all/qqB/qG contribution
+./inp/q_grid.inp                                  > Q grid file name (Pt of jet for jets)
+./inp/qt_grid.inp                                 > qT grid file name
+./inp/y_grid.inp                                  > y grid file name
+-
+0.21d0, 0.68d0, -0.126d0, 1.6d0, 1                > g1, g2, g3, Q0, nG  (BLNY form; inonpert=5)
+1  153  1   1 143 1  1 80 1                       > Active setting
+1  153  1   1 143 1  1 80 1                       > Full range
+QT_______   y_______   Q______
+
+
+########################################
+Explanation:
+(1) This control the W-piece
+5,1,1,1,1                                                 > iNONPERT, IFLAG_C3, C1/B0, C2, C3/B0 (C_{1,2,3} are used only for IFLAG_C3=99, otherwise. B0=2.0D0*DEXP(-EULER) )
+3,2,1,0,2                                                 > Order of Sudakov A, B, CFns, i_FSR(final state raditation), DelSigOrder
+(2) This control the PERT and ASYMP pieces
+1,1,1                                                     > iscale (scale for the pert calculation, iscale=0, mu=Q; iscale=1, mu=MT), , muR/mu, muF/mu
+
+########################################
+
+1960.,-1,1                                  > ECM,LTO=-1..3:LO/CSS/DelSig/Asympt/Y,iFast  LO
+1960., 0,1                                  > ECM,LTO=-1..3:LO/CSS/DelSig/Asympt/Y,iFast  W321	resummed grip
+1960., 3,1                                  > ECM,LTO=-1..3:LO/CSS/DelSig/Asympt/Y,iFast  Yk	high QT grip
+
+lha_MSTW2008nnlo68cl
+
+175.,80.385,91.1875,115.0,0.d0             > t,W,Z,h,photon masses (as of 1/1/97)
+175.,80.419,91.1882,115.0,0.d0             > t,W,Z,h,photon masses (as of 1/1/97)
+
+W+                                         > Type_V
+
+C      TYPE_V='W+','W-','Z0','A0','H0','AA','AG','ZZ','ZG','HP','HM','HZ',
+C             'H+','HB','WW_UUB','WW_DDB'
+C Add in for ResBos-A
+C______TYPE_V = 'W+_RA_UDB','W-_RA_DUB','Z0_RA_UUB','Z0_RA_DDB'
+
+
+ISTR=ISET  
+900 lha
+902,2,1,2                                  > ISTR,iPionPDF, i_RunMass,i_Model
+ctq6mS00.ini                               > Evolved PDF file
+-----------------  
+903,2,1,2                                  > ISTR,iPionPDF, i_RunMass,i_Model
+pdf00.pds                                  > Evolved PDF file
+(This is for using cteq6.6 pds files.)
+-----------------
+1601,2,1,2                                 > ISTR,iPionPDF, i_RunMass,i_Model
+-                                          > Evolved PDF file
+-----------------
+11900,2,1,2                                 > ISTR,iPionPDF, i_RunMass,i_Model
+(This will call CT12Pdf.f, for using CT10 pds files.)
+pdf00.pds                                   > Evolved PDF file
+
+C PDF choice for proton and pion, and parameters for H+ production:
+C i_RunMass = 0 ->    pole top-mass is used in the b h+ t coupling 
+C i_RunMass = 1 -> running top-mass is used in the b h+ t coupling 
+C I_MODEL.EQ.1 FOR TOPCOLOR, AND 2 FOR 2HDM 
+----------------------------
+
+CSS                                                       > CSS or CFG
+
+C Choose nonperturbative parametrization with NONPERT (1,2 or 3); 
+C NONPERT IS DEFINED IN SUBROUTINES WSETUP AND HSETUP  
+C      INONPERT=3  
+C select the choice of C1,C2,C3 and C4 with IFLAG_C3: 1 for CANONICAL  
+
+inonpert = 3 (LY form)
+3,1                                        > iNONPERT, Cfns=1(C2=1)/2(C2=.5)
+0.11d0, 0.58d0, -1.5d0, 1.6d0, 1           > g1, g2, g3, Q0, nG  (LY form)
+
+inonpert = 5 (BLNY form)
+5,1                                        > iNONPERT, Cfns=1(C2=1)/2(C2=.5)
+0.21d0, 0.68d0, -0.6d0, 1.6d0, 1           > g1, g2, g3, Q0, nG  (BLNY form; inonpert=4)
+
+0.140d0, 0.925d0,  0.032d0, 1.549d0, 2           > g1, g2, g3, Q0, nG  (TMD-BLNY form)
+0.210d0, 0.680d0, -0.126d0, 1.6d0,   2           > g1, g2, g3, Q0, nG  (BLNY form; inonpert=4)
+0.285d0, 0.149d0, -0.069d0, 1.6d0,   2           > g1, g2, g3, Q0, nG  (BLNY form: Tev-Run2)
+0.195d0, 0.82d0,   0.0204d0,1.55d0,  2           > g1, g2, g3, Q0, nG  (TMD-BLNY form)
+0.80d0,  0.935d0,  0.040d0, 1.549d0, 2           > g1, g2, g3, Q0, nG  (GN only g1 matters)
+0.18084d0, 0.16741d0,  0.00323d0, 1.549d0, 1            > g1, g2, g3, Q0, nG  (SIYY-BLNY form; inonpert=6)
+
+Nonperturbative Sudakovs
+0.5d0                                      > bMax
+
+./inp/q_dump_z0.inp                        > Q grid file name
+./inp/qt_dump_z0.inp                       > qT grid file name
+./inp/y_dump_z0.inp                        > y grid file name
+
+1   70  1  1  90  1  1  14  1              > Active setting
+
+----------------------------
+1  100  20  1  90  5  1  20  10              > Active setting
+1  100  1  1  90  1  1  20  1              > Full range
+QT_______  y_______  Q______
+

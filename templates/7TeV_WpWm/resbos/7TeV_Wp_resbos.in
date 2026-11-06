@@ -1,0 +1,80 @@
+1,30,30000,50,500000,182019              > # runs; test iter. (50*20000); MC events (50*100000); seed for random #
+./Resbos_grids/7TeV_legacy_Wp_main.out                   > Main data grid
+./Resbos_grids/7TeV_Yk_Wp.out                        > Y piece grid (same PDF or -)
+0, 0, 0, 2, 1, 0                                         > Un/reweight,kKFacP&Y,iYG,iMG,iMM
+25.0, -10, 0.0, 10000.0, 2.4                             > Cuts(1)[W+/W-]: PTECUT(mu pT min),YECUT(-10=no |eta| min),DelR,PTNCUT(mu pT max,none),YnCut(mu |eta| max)
+1.0, 8000.0, 0.0, 8000.0, -99.0, 99.0                       > Cuts(2): QMn,QMx,QTMn,QTMx,yWmn,yWmx
+0.0, 10000.,0.0                                        > Cuts(3): MT min,MT max(none),ETmiss(nu pT) min
+1.0, 172.,125.0                                         > Luminosity (pb^-1), mt,mh
+ROOTNT2                                                 > Output fromat
+1.5, 903, 0, 5, 0, 0, 0, 0.0                             > qT_Sep,PDF,Proc,Sc,ACut,ACut,iSub,iHQApp,cutM45
+WW,0                                                     > hDecay, i_decay
+80.385, 2.108                                            > W mass and width
+91.1876, 2.4952                                          > Z mass and width
+1, 1, 0, 0			                                				 > EW flag,qed flag, CKM_flag, KFAC_ANGFUNC
+
+
+
+=======================================================================
+NOTE: PHOTOS currently only works for the StdHEP output format.
+
+ Note:
+ 1. All momenta are in GeVs.
+ 2. The Y piece grid should have the same PDF as the main grid.
+
+Note:
+C EW_FLAG=0, original electroweak parameters
+C EW_FLAG=1, electroweak parameters are read from ZFITTER
+C EW_FLAG=2, electroweak parameters are used the effective born approximation formula
+c            based on the original Resbos code
+C EW_FLAG=3, electroweak parameters from FEWZ0 scheme
+c EW_FLAG=4, electroweak parameters from FEWZ1 scheme (Gmu-scheme, complex mass)
+c Note EW_FLAG=3,4 qed coupling is also fixed.
+
+C qed_FLAG=0, original electroweak parametes
+C qed_FLAG=1, qed coupling alpha uses running coupling
+c qed_FLAG=2, qed coupling alpha uses G_mu scheme formula
+
+C CKM_FLAG=0, original CKM parameters
+C CKM_FLAG=1, 2016 PDG number
+C Note the grids used CKM_FLAG=0 parameters
+================
+
+1,20,20000,50,500000,982019                              > # runs; test iterations (50*20000); MC events (50*100000); seed for random #
+
+1,50,30000,300,300000,982019       > # runs; # iterations (50*30000); MC events (300*300000); seed for random number generator(final run)
+1,10,30000,10,300000,982019        > # runs; # iteration, # Events; seed for random number generator (for test run)
+1,5,3000,10,30000,982019                 > # runs; no. iteration, no. Events; seed for random number generator
+
+PAWNT2                                          > Output fromat
+ROOTNT2                                         > Output fromat
+HBook                                           > Output fromat
+GBook                                           > Output fromat
+
+============
+
+Note: There are different sets of cuts, depending on the setup in 
+      SUBROUTINE PRIMARY_CUTS(PASS_CUTS)
+
+      REAL*8 PTECUT,YECUT,DELR_CUT,PTNCUT,yNCut,YWLCUT,YWUCUT
+      COMMON/MYCUT/PTECUT,YECUT,DELR_CUT,PTNCUT,yNCut,YWLCUT,YWUCUT
+
+0.1, -10, 0.0, 1000, 10                          > Cuts(1): pTlmin,ymin,DelR,pTlmax,ymax
+25.0, 99.0, 0.0, 25.0, 99.0                      > Cuts(1): PTECUT,YECUT,DELR_CUT,PTNCUT,YnCut
+0.0, 99.0, 0.0, 0.0, 99.0                        > Cuts(1): PTECUT,YECUT,DELR_CUT,PTNCUT,YnCut
+
+        else if (Boson. Eq. 'W+' .Or. Boson. Eq. 'W-') then
+CCPY Jan 31, 2009
+CCPY!          IF(YXPT(ID_ELE) .LT. PTECUT.OR.YXPT(ID_ELE) .GT. PTNCUT)
+CCPY!     >      RETURN
+CCPY!          IF(YXETA(ID_ELE) .LT. YECUT.OR.YXETA(ID_ELE) .GT. YNCUT)
+CCPY!     >      RETURN
+
+         IF(YXPT(ID_ELE) .LT. PTECUT.OR.YXPT(ID_NU) .LT. PTNCUT)
+     >      RETURN
+         IF(ABS(YXETA(ID_ELE)).GT.YECUT.OR.ABS(YXETA(ID_NU)).GT.YNCUT)
+     >      RETURN
+
+          IF(YXPT(ID_NU) .LT. ETMin) return
+
+=============

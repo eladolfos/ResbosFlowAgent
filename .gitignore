@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+REVISION
+*.root
+slurm_*
+bin/
+
+# the user's own files: environment profile, campaigns, personal recipes
+local/*
+!local/README.md
+!local/env.example.md
+!local/remote.example.conf

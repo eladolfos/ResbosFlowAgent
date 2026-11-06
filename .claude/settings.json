@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Bash(sftp:*)",
+      "Bash(rsync:*)",
+      "Bash(sbatch:*)",
+      "Bash(srun:*)"
+    ]
+  }
+}
