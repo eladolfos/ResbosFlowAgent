@@ -43,6 +43,8 @@ Nothing is installed on the cluster by hand: `sync` copies the toolchain (Python
 
 ## Each session
 
+The launcher `./ResbosFlowIA` does steps 1 and 2 for you (it writes `local/remote.conf` the first time, offers to open the connection, and starts the assistant). The manual way:
+
 1. **Open the connection yourself**, in a terminal (password, passphrase or 2FA are typed here, not to the agent):
 
    ```sh
@@ -68,7 +70,7 @@ From then on the agent works as in `AGENTS.md`, with every cluster command writt
 | `pull PATH` | fetches a small file or folder (files over 20 MB and `.root` are skipped) into `local/remote_files/` |
 | `queue [JOBID...]` | `squeue` for your user, or `sacct` for given job ids; at most once per 5 minutes |
 
-`run` accepts only: `run_process.py` (never `--submit`), `campaign_review.py show|approve|submit`, `validate_campaign.py`, `collect_env.sh`, and read-only inspection
+`run` accepts only: `run_process.py` (never `--submit`), `campaign_review.py show|approve|submit`, `preflight.py prepare|submit|result`, `validate_campaign.py`, `collect_env.sh`, and read-only inspection
 (`lhapdf-config`, `hoppet-config`, `root-config`, compiler/python versions, `lhapdf ls --installed`, `sinfo -s`, `module list|avail`, `test`, `ls`, `head`, `tail`, `wc -l`, `df -h`, `sha256sum`).
 Anything else is refused with exit code 5.
 

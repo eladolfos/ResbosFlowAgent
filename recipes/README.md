@@ -6,6 +6,7 @@ Skills are generic procedures; recipes are cases. Start a new one from `_TEMPLAT
 | Recipe | Mode | Status |
 |---|---|---|
 | `collider-wpwmz0-legacy-chain.md` | collider, W+/W-/Z0 pp and ppbar, Legacy chain | partial (validated by the authors on their installation) |
+| `smoke-test-collider.md` | collider, small W+ 13 TeV campaign to test an installation | unvalidated (designed, never run) |
 | `fixedtarget-dy.md` | fixed target, E605/E866/E906 | partial (validated by the authors on their installation) |
 
 Personal recipes go in `local/recipes/` (git-ignored). Recipes meant for everyone go here, through a pull request.

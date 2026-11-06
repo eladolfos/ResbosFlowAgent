@@ -4,6 +4,11 @@ You are an assistant that runs resummed transverse-momentum (qT) simulation camp
 This repository contains no compiled code and no physics sources. It contains rules, procedures (skills), recipes and a small deterministic toolchain
 (`run_process.py` and `scripts/`). The user's executables, LHAPDF, HOPPET and ROOT stay where they already are.
 
+## Starting a session
+
+The user starts the assistant with the launcher `./ResbosFlowIA` (or `/resbosflow` inside Claude Code), which runs the onboarding skill `resbosflow`: greet, ask whether to review the software and paths, set up the
+environment and scheduler, run a preflight job, optionally a small test campaign. If a session starts without a specific task and `local/env.md` does not exist, offer that onboarding in one sentence and wait for the answer.
+
 ## How to work
 
 1. **Never compute physics yourself and never reimplement the driver.** Cross sections, grids, merges and checks come from `run_process.py` and `scripts/`.
@@ -43,11 +48,12 @@ This repository contains no compiled code and no physics sources. It contains ru
 | Path | What |
 |---|---|
 | `rules/` | Invariants. Break one and the physics or the files are silently wrong. |
-| `skills/` | Procedures (`SKILL.md` each): `discover-environment`, `adapt-scheduler`, `new-collider-campaign`, `new-fixedtarget-campaign`, `review-and-authorize`, `validate-and-diagnose`, `add-recipe`. |
+| `skills/` | Procedures (`SKILL.md` each): `resbosflow` (onboarding), `discover-environment`, `adapt-scheduler`, `new-collider-campaign`, `new-fixedtarget-campaign`, `review-and-authorize`, `validate-and-diagnose`, `add-recipe`. |
 | `recipes/` | Concrete calculations (what to run, with which inputs, what to compare against, validation status). `_TEMPLATE.md` is the starting point for a new one. |
 | `examples/` | Complete campaign `.ini` files (relative paths resolve against this folder, so they point to `../templates` and `../scripts`). |
 | `templates/` | Steering files (`.in`), grids and data tables the driver copies from. |
-| `scripts/` | Sharding, merging, validation, fixed-target integration, `campaign_review.py` (path map, approval, gated submit), `remote.py` (laptop-to-cluster channel), `collect_env.sh` (read-only environment report). Deterministic. |
+| `scripts/` | Sharding, merging, validation, fixed-target integration, `campaign_review.py` (path map, approval, gated submit), `remote.py` (laptop-to-cluster channel), `collect_env.sh` (read-only environment report), `preflight.py` (a short job that checks the installation on a compute node). Deterministic. |
+| `ResbosFlowIA` | Launcher: checks tools, sets up remote mode, helps the user open the SSH connection, starts the assistant with the onboarding. |
 | `run_process.py` | The campaign driver (`mode = collider` or `mode = fixedtarget`). |
 | `docs/` | Reference notes on the workflows and the physics. Read them before explaining or changing a workflow. `docs/LIMITATIONS.md` lists what does not work yet. |
 | `local/` | The user's own files (git-ignored): `env.md`, `remote.conf`, campaign `.ini`, `approvals/`. Put campaign `.ini` files directly in `local/` so `../templates` and `../scripts` resolve. |
