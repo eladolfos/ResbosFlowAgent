@@ -27,7 +27,7 @@ You need administrator rights and virtualization enabled (on a university-manage
    cd ~ && git clone https://github.com/eladolfos/ResbosFlowAgent.git
    ```
    Do not clone it with Git for Windows: it would break the symlink `.claude/skills` and the line endings.
-5. Ubuntu has its own `~/.ssh`, separate from Windows. Put the SSH block of `docs/REMOTE.md` in `~/.ssh/config` **in Ubuntu**. If you reuse a key from Windows, copy it into Ubuntu's `~/.ssh` and run `chmod 600 ~/.ssh/id_*` (SSH refuses keys with open permissions).
+5. Ubuntu has its own `~/.ssh`, separate from Windows. Do SSH setup **in Ubuntu**: the assistant checks what is there and offers to write the missing `~/.ssh/config` block (or put the block of `docs/REMOTE.md` there yourself). If you reuse a key from Windows, copy it into Ubuntu's `~/.ssh` and run `chmod 600 ~/.ssh/id_*` (SSH refuses keys with open permissions).
 6. Then follow the sections below, always in the Ubuntu tab: `~/ResbosFlowAgent/ResbosFlowAI`.
 
 Results stay on the cluster. If you need a file on Windows, it appears under `\\wsl$\Ubuntu\home\<you>\ResbosFlowAgent\local\remote_files` after a `pull`.
@@ -51,7 +51,7 @@ git clone https://github.com/eladolfos/ResbosFlowAgent.git && cd ResbosFlowAgent
 ln -s "$PWD/ResbosFlowAI" ~/.local/bin/ResbosFlowAI      # optional: start it from any folder
 ```
 
-Add the SSH block from `docs/REMOTE.md` to `~/.ssh/config` (your user name, your gateway and node, `ControlMaster auto`, `ControlPath`, `ControlPersist 30m`). That is all you configure by hand.
+SSH needs no manual setup here: if you already have working SSH to your cluster the assistant uses it; if not, it offers to write the `~/.ssh/config` block for you (or you can add the one in `docs/REMOTE.md` yourself).
 
 ## 2. Start
 
@@ -59,14 +59,15 @@ Add the SSH block from `docs/REMOTE.md` to `~/.ssh/config` (your user name, your
 ResbosFlowAI               # or ./ResbosFlowAI from the repository folder
 ```
 
-The first time it asks whether your jobs run on a cluster you reach over SSH (the usual case) or on this machine, and for the SSH alias and a folder on the cluster. It writes `local/remote.conf` for you.
-Whenever the SSH connection is closed it offers to open it: **you** type the password / passphrase / 2FA in that terminal, never to the assistant. Then it starts Claude Code with the onboarding.
+The launcher only checks that Python and Claude Code are installed and starts the assistant. It does **not** ask for SSH details: the assistant finds out how you reach your cluster, and if you use SSH it first looks at what your computer
+already has (`~/.ssh/config`, keys, a running agent) and uses it. Only if something is missing does it ask whether you want help configuring it. You type any password, passphrase or 2FA code yourself, in your own terminal.
+If an earlier session saved your SSH alias, the launcher offers to reopen the connection.
 
 ## 3. What the assistant does
 
 It greets you, shows the menu above, and asks: **"Do you want me to review your software and paths now?"** If you say yes, it goes through these steps, asking before each one that changes anything:
 
-1. **Connection and toolchain** (`remote.py status`, `sync`): copies the Python scripts and templates to the cluster; nothing else is installed.
+1. **Where your jobs run and how to reach it** (`setup-ssh`): if you use SSH it inspects your computer first, tests one non-interactive login with your consent, and offers to configure only what is missing. Then `remote.py sync` copies the Python scripts and templates to the cluster; nothing else is installed.
 2. **What you have:** it asks where your ResBos executables are, which LHAPDF/HOPPET/ROOT and PDF set you use, where to write results (you choose), and for a batch script that works on your cluster.
 3. **Review** (`discover-environment`, `adapt-scheduler`): one read-only report of your cluster, your batch script translated into the `[scheduler]` and `[environment]` settings, and a first campaign `.ini` in `local/` with your paths.
    It tells you what is found, what is missing and what it could not verify.

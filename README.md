@@ -5,7 +5,7 @@ You do not build anything from this repository: your executables, LHAPDF, HOPPET
 
 - `AGENTS.md` / `CLAUDE.md` — how to behave;
 - `rules/` — the invariants that silently break results if violated;
-- `skills/` — procedures: `resbosflow` (onboarding), `discover-environment`, `adapt-scheduler`, `new-collider-campaign`, `new-fixedtarget-campaign`, `review-and-authorize`, `validate-and-diagnose`, `add-recipe`;
+- `skills/` — procedures: `resbosflow` (onboarding), `setup-ssh`, `discover-environment`, `adapt-scheduler`, `new-collider-campaign`, `new-fixedtarget-campaign`, `review-and-authorize`, `validate-and-diagnose`, `add-recipe`;
 - `recipes/` — concrete calculations and how far each one is validated;
 - `ResbosFlowAI` — the launcher;
 - `run_process.py`, `scripts/`, `templates/`, `examples/` — the deterministic toolchain the assistant calls (copied from ResbosFlow, see `docs/SOURCE.md`).

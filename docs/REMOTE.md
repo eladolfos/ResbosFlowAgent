@@ -17,6 +17,8 @@ Nothing is installed on the cluster by hand: `sync` copies the toolchain (Python
 
 ## One-time setup (laptop)
 
+You do not have to do this by hand: the skill `setup-ssh` (`scripts/ssh_check.py`) inspects what the computer already has, tests one login with your consent and offers to write what is missing. The manual steps:
+
 1. **SSH config.** In `~/.ssh/config` (replace `<netid>`; the host names are the ones of the MSU HPCC gateway and development node; use your own site's if different):
 
    ```sshconfig

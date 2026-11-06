@@ -29,10 +29,17 @@ Read `docs/CAPABILITIES.md` first; the menu below must match it. Say, briefly:
 
 If `local/env.md` already exists, show its date and ask whether to re-review or use it.
 
-## Step 1 - connection and toolchain
+## Step 1 - where do the jobs run, and how do we reach it
 
-- Local mode: skip. Remote mode (`local/remote.conf`): `python3 scripts/remote.py status`. If the connection is closed, ask the user to open it (`ssh -fN <alias>` in their terminal, or rerun `ResbosFlowAI`) and stop until they say it is open.
-- If the toolchain on the cluster is missing or different: `python3 scripts/remote.py sync`.
+Do not ask for an SSH alias or any SSH detail yet. First find out the situation:
+
+1. If `local/remote.conf` exists: remote mode is already chosen; `python3 scripts/remote.py status`. If the connection is closed, ask the user to open it (`ssh -fN <alias>` in their terminal, or rerun `ResbosFlowAI`) and stop until they say it is open.
+2. Otherwise check `command -v sbatch`. If it exists, this assistant is running on a machine with the scheduler (for example the cluster itself): say so, confirm with the user, and use **local mode** (every command is run as written).
+3. If `sbatch` does not exist, ask one question: do their jobs run (a) on a cluster they reach over SSH from this computer, (b) on this computer, or (c) they have no cluster yet and only want to look around?
+   - (a): run the `setup-ssh` skill. It inspects what the computer already has, tests it with consent, and offers to configure only what is missing. It ends by writing `local/remote.conf`.
+   - (b): local mode.
+   - (c): explain what the tool needs (`docs/CAPABILITIES.md`) and stop after step 0, or continue with documentation only.
+4. In remote mode, if the toolchain on the cluster is missing or different: `python3 scripts/remote.py sync`.
 
 ## Step 2 - what they have
 

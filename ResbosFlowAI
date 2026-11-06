@@ -2,9 +2,9 @@
 # ResbosFlowAI -- start the ResbosFlowAgent assistant.
 #
 # Run it from anywhere (put a link on your PATH once:  ln -s "$PWD/ResbosFlowAI" ~/.local/bin/ResbosFlowAI).
-# It checks that the tools are there, sets up remote mode if you use a cluster over SSH, helps you open the SSH connection
-# (you type the password/passphrase/2FA in THIS terminal, never to the assistant), and starts the assistant with the
-# onboarding: it asks whether you want your software and paths reviewed, and then sends a test.
+# It checks that python3 and the agent are installed and starts the assistant with the onboarding: it asks whether you want your software and
+# paths reviewed, finds out how you reach your cluster (and helps with SSH if you need it), and then sends a test.
+# If local/remote.conf exists from an earlier session, it offers to open the SSH connection (you type the password/passphrase/2FA here, never to the assistant).
 #
 # Environment: RESBOSFLOWAI_AGENT=<command>  start another agent than `claude` (it must read AGENTS.md).
 
@@ -26,47 +26,25 @@ need python3 "Install Python 3."
 need "$AGENT" "Install Claude Code (https://claude.com/claude-code), or set RESBOSFLOWAI_AGENT to another agent that reads AGENTS.md."
 [ "$MISSING" -eq 0 ] || exit 1
 
-# --- mode: remote (laptop -> cluster over SSH) or local (this machine has the scheduler)
-if [ ! -f "$CONF" ]; then
-  say ""
-  say "First run. Where do your jobs run?"
-  say "  r) on a cluster that I reach over SSH (the assistant stays on this machine)   [usual]"
-  say "  l) on this machine (it has the executables and the scheduler)"
-  read -r -p "Choose r or l [r]: " MODE; MODE="${MODE:-r}"
-  if [ "$MODE" = "r" ]; then
-    need ssh "Install an OpenSSH client."; need rsync "Install rsync (it is also needed on the cluster)."
-    [ "$MISSING" -eq 0 ] || exit 1
-    say ""
-    say "Remote mode needs an alias in ~/.ssh/config with ControlMaster (see docs/REMOTE.md)."
-    read -r -p "SSH alias of the node where you run jobs (for example msu-dev): " ALIAS
-    if ! [[ "$ALIAS" =~ ^[A-Za-z0-9_.-]+$ ]]; then say "ResbosFlowAI: the alias must be a name from ~/.ssh/config (letters, digits . _ -)."; exit 1; fi
-    read -r -p "Folder on the cluster for the toolchain [~/ResbosFlowAgent]: " RREPO; RREPO="${RREPO:-~/ResbosFlowAgent}"
-    printf '[remote]\nhost = %s\nrepo = %s\n' "$ALIAS" "$RREPO" > "$CONF"
-    say "Wrote $CONF"
-  else
-    say "Local mode. (To switch later, create local/remote.conf from local/remote.example.conf.)"
-  fi
-fi
-
-# --- remote mode: make sure the user's SSH connection is open
+# --- SSH is NOT asked here. Whether jobs run on this machine, on the cluster the assistant is installed on, or on a cluster reached over SSH,
+# and how to set up SSH, is decided inside the onboarding (skills/resbosflow and skills/setup-ssh), where the assistant can inspect this computer first.
+# If an earlier session already wrote local/remote.conf, keep the persistent connection open for it.
 if [ -f "$CONF" ]; then
   ALIAS="$(sed -n 's/^host *= *\([^ #]*\).*/\1/p' "$CONF" | head -1)"
-  if [ -z "$ALIAS" ]; then say "ResbosFlowAI: $CONF has no host."; exit 1; fi
-  if ! ssh -O check "$ALIAS" >/dev/null 2>&1; then
-    say ""
-    say "The SSH connection to '$ALIAS' is not open."
-    say "Opening it now. Type your password / passphrase / 2FA here; the assistant never sees it."
-    read -r -p "Open it? [Y/n]: " YN
-    if [ "${YN:-Y}" != "n" ] && [ "${YN:-Y}" != "N" ]; then
-      ssh -fN "$ALIAS" || { say "ResbosFlowAI: could not open the connection. Check ~/.ssh/config (docs/REMOTE.md) and try 'ssh -fN $ALIAS' by hand."; exit 1; }
-    else
-      say "Not opened. The assistant will start, but it cannot reach the cluster until you run:  ssh -fN $ALIAS"
+  if [ -n "$ALIAS" ] && command -v ssh >/dev/null 2>&1; then
+    if ! ssh -O check "$ALIAS" >/dev/null 2>&1; then
+      say ""
+      say "The SSH connection to '$ALIAS' (from local/remote.conf) is not open."
+      read -r -p "Open it now? You type the password / passphrase / 2FA here, never to the assistant. [Y/n]: " YN
+      if [ "${YN:-Y}" != "n" ] && [ "${YN:-Y}" != "N" ]; then
+        ssh -fN "$ALIAS" || say "Could not open it. The assistant can help you find out why."
+      fi
     fi
+    if ssh -O check "$ALIAS" >/dev/null 2>&1; then say "SSH connection to '$ALIAS': open."; fi
   fi
-  if ssh -O check "$ALIAS" >/dev/null 2>&1; then say "SSH connection to '$ALIAS': open."; fi
 fi
 
-PROMPT="Start the ResbosFlowAgent onboarding: follow the skill 'resbosflow'. Greet me in one or two sentences, say in three lines what you will do, show the short menu of what you can compute (orders NLO, resNLO, LO; collider W/Z/photon; fixed-target Drell-Yan; from docs/CAPABILITIES.md), and ask whether I want you to review my software and paths now. Do not run anything on the cluster until I answer."
+PROMPT="Start the ResbosFlowAgent onboarding: follow the skill 'resbosflow'. Greet me in one or two sentences, say in three lines what you will do, show the short menu of what you can compute (orders NLO, resNLO, LO; collider W/Z/photon; fixed-target Drell-Yan; from docs/CAPABILITIES.md), and ask whether I want you to review my software and paths now. Do not assume how I reach my cluster and do not ask for an SSH alias yet: the onboarding finds out. Do not run anything on the cluster until I answer."
 say ""
 say "Starting the assistant ($AGENT)..."
 exec "$AGENT" "$PROMPT"

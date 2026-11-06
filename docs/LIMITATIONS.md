@@ -31,6 +31,7 @@ walltime ceiling and unknown-key rejection. The assistant can prepare and inspec
 - Tested only with a fake `ssh` (commands run in a local folder). Not used against the real HPCC yet: the assumptions are `ControlMaster`/`ControlPath` in `~/.ssh/config`, `ProxyJump` through the gateway,
   `bash -lc` defining `module` on the node, and `rsync` on both ends.
 - The allow list is a guard rail; the `.claude/settings.json` deny rules only bind Claude Code's own shell tool. Output the agent reads is sent to the model provider (`docs/REMOTE.md`).
+- `scripts/ssh_check.py` was tested with a throw-away home folder, the real local `ssh -G`, a fake `ssh` and unit checks of the error classification; never against a real cluster. The connection test is `BatchMode`: it cannot answer password/2FA, so many sites will report `AUTH`/`CLOSED` even when SSH works interactively; with `ProxyJump`, OpenSSH hides the jump host's own error, so the jump host must be tested alone.
 - Approval records live on the cluster (next to `dest`), not on the laptop.
 - `sync` copies files but does not delete removed ones on the cluster.
 

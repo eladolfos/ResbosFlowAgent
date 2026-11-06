@@ -28,7 +28,7 @@ environment and scheduler, run a preflight job, optionally a small test campaign
 ## Where commands run
 
 - **Local mode** (no `local/remote.conf`): the agent runs on the machine that has the executables and the scheduler (a workstation, or a cluster node where the agent can be installed). Commands are run as written.
-- **Remote mode** (`local/remote.conf` exists): the agent runs on the user's laptop; the campaigns run on the cluster. The user opens one SSH connection themselves (`ssh -fN <alias>`). Every cluster command goes through `scripts/remote.py`,
+- **Remote mode** (`local/remote.conf` exists): the agent runs on the user's laptop; the campaigns run on the cluster. The user opens one SSH connection themselves (`ssh -fN <alias>`). If `local/remote.conf` does not exist yet, do not ask for an alias: inspect first with the skill `setup-ssh` (`scripts/ssh_check.py`), which uses what the computer already has and offers to configure only what is missing. Every cluster command goes through `scripts/remote.py`,
   never through `ssh`, `scp`, `rsync` or `sbatch` (the project settings deny them). Setup and rules: `docs/REMOTE.md`.
 
   | Local form | Remote form |
@@ -48,11 +48,11 @@ environment and scheduler, run a preflight job, optionally a small test campaign
 | Path | What |
 |---|---|
 | `rules/` | Invariants. Break one and the physics or the files are silently wrong. |
-| `skills/` | Procedures (`SKILL.md` each): `resbosflow` (onboarding), `discover-environment`, `adapt-scheduler`, `new-collider-campaign`, `new-fixedtarget-campaign`, `review-and-authorize`, `validate-and-diagnose`, `add-recipe`. |
+| `skills/` | Procedures (`SKILL.md` each): `resbosflow` (onboarding), `setup-ssh`, `discover-environment`, `adapt-scheduler`, `new-collider-campaign`, `new-fixedtarget-campaign`, `review-and-authorize`, `validate-and-diagnose`, `add-recipe`. |
 | `recipes/` | Concrete calculations (what to run, with which inputs, what to compare against, validation status). `_TEMPLATE.md` is the starting point for a new one. |
 | `examples/` | Complete campaign `.ini` files (relative paths resolve against this folder, so they point to `../templates` and `../scripts`). |
 | `templates/` | Steering files (`.in`), grids and data tables the driver copies from. |
-| `scripts/` | Sharding, merging, validation, fixed-target integration, `campaign_review.py` (path map, approval, gated submit), `remote.py` (laptop-to-cluster channel), `collect_env.sh` (read-only environment report), `preflight.py` (a short job that checks the installation on a compute node). Deterministic. |
+| `scripts/` | Sharding, merging, validation, fixed-target integration, `campaign_review.py` (path map, approval, gated submit), `remote.py` (laptop-to-cluster channel), `collect_env.sh` (read-only environment report), `preflight.py` (a short job that checks the installation on a compute node), `ssh_check.py` (inspect and set up SSH on the user's computer). Deterministic. |
 | `ResbosFlowAI` | Launcher: checks tools, sets up remote mode, helps the user open the SSH connection, starts the assistant with the onboarding. |
 | `run_process.py` | The campaign driver (`mode = collider` or `mode = fixedtarget`). |
 | `docs/` | Reference notes on the workflows and the physics. Read them before explaining or changing a workflow. `docs/LIMITATIONS.md` lists what does not work yet. |
