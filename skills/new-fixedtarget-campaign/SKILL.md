@@ -26,7 +26,7 @@ then a final job: Yao's ROOT macro `scripts/getnlo/getnlo.C` per point (via `scr
 3. **Start from** `examples/FT_e605_CT25NLO.ini`. Copy to `local/`, set `[paths] dest`, `[campaign] name/pdf/compute`, `[executables]`, `[fixedtarget] getfixed, resbos2_env`
    and, if the PDF name exists in two LHAPDF installs, `lhapdf_data_path`. Do not add `[energies]` or `[grids] experimental/generate`: the driver refuses them in this mode.
 4. **Prepare** (no submit): `python3 run_process.py local/<name>.ini`. Check that every table row has Q <= ECM and read back the resolved inputs.
-5. **Review, authorize and submit one dataset at a time.** Array tasks count against queue limits. Run `review-and-authorize`; submit with `scripts/campaign_review.py submit` only after the approval is recorded.
+5. **Review, authorize and submit one dataset at a time.** Array tasks count against queue limits; show the RESOURCES section (one Legacy task per table row, the `[fixedtarget] throttle`, GetFixed cores) and ask whether the user wants a lower `throttle` or a smaller table. Run `review-and-authorize`; submit with `scripts/campaign_review.py submit` only after the approval is recorded.
 6. **Not automated**: the fixed-xF refinement (y(qT) < y0) and W432. If the user needs them, say so; do not improvise.
 7. **After the run**: `results/<name>_LO_NLO_W321.txt` holds LO, NLO, W321 and K-factors. Compare against a reference if one exists (`data/` of the original project, or the user's own)
    and record the outcome in the recipe (`rules/unvalidated_recipes.md`).

@@ -31,7 +31,11 @@ to submit without a matching approval.
 5. **Present a review to the user**, short and concrete, in this order:
    1. the `.ini` (the full text printed by `--full`; point out the lines that matter: energy, processes, PDF, order, grids, shards);
    2. where it reads and writes (the table);
-   3. what will be sent: number of scripts, partitions, accounts, walltimes, total array tasks against the site's queue limit (`rules/cluster_etiquette.md`);
+   3. **how many jobs and cores it will use and how it runs** (the RESOURCES section of `show`, also `campaign_review.py resources <ini>`): submitted jobs, scheduler tasks against the site's queue limit (`rules/cluster_etiquette.md`),
+      cores and memory per task, walltime per task, the most cores in use at the same time, the stages and what each waits for, and the upper bound of core-hours. Say plainly that the core-hours figure is a ceiling made from requested walltimes,
+      not a forecast, and that fewer jobs does not mean less work: with fewer shards the same work runs in fewer, longer tasks. Then **ask whether they want to use fewer jobs or cores**. Offer the options printed under "If this is more than
+      you want to use" (shards, processes, `compute`, grid range, cut sets, VEGAS, `throttle` in fixed target), explain the trade-off of each (longer tasks and walltime fit, or less physics), and let them choose. If they change something, edit the `.ini`,
+      prepare again with `--reuse`, and show the RESOURCES section again; the changed `.ini` needs a new approval. Do not reduce anything on your own;
    4. warnings that remain, and anything unverified (`docs/LIMITATIONS.md`): for example walltimes capped by `max_time`, a PDF set present in two LHAPDF paths.
 6. **Ask for authorization** with a direct question that names the campaign and the destination: "Approve `<name>` to be submitted to partition `<p>`, writing to `<dest>`?" Then:
    - Authorization is an explicit yes to that question after step 5. "Looks fine", a question, or an answer about something else is not authorization.

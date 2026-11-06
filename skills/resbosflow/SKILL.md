@@ -70,7 +70,7 @@ Run the `discover-environment` skill with their paths as `--check` arguments (on
 ## Step 5 - small test campaign (optional, ask)
 
 Ask whether they want a small real campaign to test the whole chain. Explain honestly: `recipes/smoke-test-collider.md` is `unvalidated`; the authors have not run it, so its wall time is unknown and it may need adjusting.
-If yes: continue with `new-collider-campaign` (the `.ini` from step 3 already is the smoke test), then `review-and-authorize`, and after the jobs finish `validate-and-diagnose`. For fixed target use `recipes/fixedtarget-dy.md`.
+If yes: continue with `new-collider-campaign` (the `.ini` from step 3 already is the smoke test), then `review-and-authorize` (which tells them how many jobs and cores it will use and lets them choose fewer), and after the jobs finish `validate-and-diagnose`. For fixed target use `recipes/fixedtarget-dy.md`.
 
 ## Step 6 - close
 

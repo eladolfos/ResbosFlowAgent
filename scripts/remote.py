@@ -17,7 +17,7 @@ one-minute window. Exit codes: 2 usage/config, 3 connection not open, 4 rate lim
 
 ALLOWED with `run`:
   python3 run_process.py local/X.ini [--reuse] [--resbos-only] [--clean-shards]     (never --submit)
-  python3 scripts/campaign_review.py show|approve|submit local/X.ini [--full] [--yes-i-reviewed] [--note TEXT]
+  python3 scripts/campaign_review.py show|resources|approve|submit local/X.ini [--full] [--yes-i-reviewed] [--note TEXT]
   python3 scripts/preflight.py prepare|submit|result local/X.ini [--yes-i-reviewed]
   python3 scripts/validate_campaign.py DEST [--cross-tol X] [--min-root-mb X]
   bash scripts/collect_env.sh [--check PATH]...
@@ -194,8 +194,8 @@ def check_allowed(argv):
                 return "--submit bypasses the approval. Use: python3 scripts/campaign_review.py submit local/<name>.ini (skill review-and-authorize)"
             return _flags(rest[2:], ("--reuse", "--resbos-only", "--clean-shards"))
         if rest[:1] == ["scripts/campaign_review.py"]:
-            if len(rest) < 3 or rest[1] not in ("show", "approve", "submit") or not INI_RE.match(rest[2]):
-                return "usage: python3 scripts/campaign_review.py show|approve|submit local/<name>.ini [--full] [--yes-i-reviewed] [--note TEXT]"
+            if len(rest) < 3 or rest[1] not in ("show", "resources", "approve", "submit") or not INI_RE.match(rest[2]):
+                return "usage: python3 scripts/campaign_review.py show|resources|approve|submit local/<name>.ini [--full] [--yes-i-reviewed] [--note TEXT]"
             return _flags(rest[3:], ("--full", "--yes-i-reviewed"), ("--note",))
         if rest[:1] == ["scripts/preflight.py"]:
             if len(rest) < 3 or rest[1] not in ("prepare", "submit", "result") or not INI_RE.match(rest[2]):

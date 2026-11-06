@@ -2,7 +2,8 @@
 """
 campaign_review.py -- show where a campaign reads and writes, and gate the submission on a recorded human approval.
 
-  show    <ini> [--full]   path map (read/write, exists, free space), environment, scheduler, and, if the campaign is
+  resources <ini>          jobs, tasks, cores, memory and walltime per stage, how they chain, peak cores, and how to reduce them
+  show    <ini> [--full]   path map (includes the resources section) (read/write, exists, free space), environment, scheduler, and, if the campaign is
                            prepared, what the generated scripts will send (partitions, accounts, walltimes, array tasks)
   approve <ini> --yes-i-reviewed [--note TEXT]
                            record the approval: sha256 of the .ini and of the prepared dest/ scripts.
@@ -147,6 +148,190 @@ def fmt(d):
     return ", ".join(f"{k} x{v}" for k, v in sorted(d.items())) or "-"
 
 
+
+def walltime_hours(t):
+    """SLURM time (M, M:S, H:M:S, D-H, D-H:M, D-H:M:S) in hours."""
+    try:
+        days = 0
+        if "-" in t:
+            d, t = t.split("-", 1)
+            days = int(d)
+            parts = [int(x) for x in t.split(":")]
+            parts += [0] * (3 - len(parts))
+            return days * 24 + parts[0] + parts[1] / 60 + parts[2] / 3600
+        parts = [int(x) for x in t.split(":")]
+        if len(parts) == 1:
+            return parts[0] / 60
+        if len(parts) == 2:
+            return parts[0] / 60 + parts[1] / 3600
+        return parts[0] + parts[1] / 60 + parts[2] / 3600
+    except ValueError:
+        return 0.0
+
+
+def read_header(path):
+    h = {"time": "?", "cpus": 1, "ntasks": 1, "mem": "?", "array": None, "cap": None}
+    try:
+        text = open(path, errors="replace").read()
+    except OSError:
+        return None
+    for line in text.splitlines():
+        if not line.startswith("#SBATCH"):
+            continue
+        for opt in re.findall(r"--([a-z-]+)=(\S+)", line):
+            k, v = opt
+            if k == "time":
+                h["time"] = v
+            elif k == "cpus-per-task":
+                h["cpus"] = int(v)
+            elif k == "ntasks":
+                h["ntasks"] = int(v)
+            elif k == "mem":
+                h["mem"] = v
+            elif k == "mem-per-cpu":
+                h["mem"] = v + "/cpu"
+            elif k == "array":
+                m = re.match(r"(\d+)-(\d+)(?:%(\d+))?$", v)
+                if m:
+                    h["array"] = int(m.group(2)) - int(m.group(1)) + 1
+                    h["cap"] = int(m.group(3)) if m.group(3) else None
+    h["cores"] = h["cpus"] * h["ntasks"]
+    return h
+
+
+def submissions(dest):
+    """Every sbatch submission that submit_all.sh makes: (script path, tasks, has_dependency, throttle cap)."""
+    sa = os.path.join(dest, "submit_all.sh")
+    subs = []
+    if not os.path.isfile(sa):
+        return subs
+    for line in open(sa).read().splitlines():
+        m = re.search(r'run_shards\s+"([^"]+)"\s+submit_(\S+)_array\.sh\s+\S+\s+(\d+)\)', line)
+        if m:
+            d, label, n = m.group(1), m.group(2), int(m.group(3))
+            subs.append((os.path.join(d, f"run_{label}_array.sb"), n, False, None))
+            subs.append((os.path.join(d, f"merge_{label}_array.sb"), 1, True, None))
+            continue
+        m = re.search(r'sbatch\s+((?:--\S+\s+)*)"?([^\s")]+\.sb)"?', line)
+        if m:
+            script = m.group(2)
+            d = re.search(r'cd\s+"([^"]+)"', line)
+            if not os.path.isabs(script) and d:
+                script = os.path.join(d.group(1), script)
+            subs.append((script, None, "--dependency" in m.group(1), None))
+    return subs
+
+
+def role_of(script):
+    b = os.path.basename(script)
+    if b == "analysis.sb":
+        return "analysis (waits, then validates)"
+    m = re.match(r"merge_(.+)_array\.sb$", b)
+    if m:
+        return f"merge of the {m.group(1)} shards"
+    m = re.match(r"run_(w_pert|w_asym|legacy)_array\.sb$", b)
+    if m:
+        return f"{m.group(1)} shards"
+    if b.startswith("run_get_yk_new"):
+        return "get_yk_new"
+    if b.endswith("_points.sb"):
+        return "Legacy, one task per table row"
+    if b.endswith("_merge.sb"):
+        return "merge of the table rows"
+    if b == "run_getfixed.sb":
+        return "ResBos2 GetFixed"
+    if b.endswith("_final.sb"):
+        return "final table (getnlo + K-factors)"
+    if b.startswith("run_") and re.search(r"_(resNLO|nloasy|nlodsi)\.sb$", b):
+        return "resbos (event generation)"
+    if "hadd" in b:
+        return "hadd of ROOT files"
+    return b
+
+
+def resource_plan(dest):
+    rows, order = {}, []
+    for script, tasks, dep, _ in submissions(dest):
+        h = read_header(script)
+        if h is None:
+            continue
+        n = tasks if tasks is not None else (h["array"] or 1)
+        key = script
+        r = rows.get(key)
+        if r is None:
+            r = rows[key] = {"role": role_of(script), "subs": 0, "tasks": 0, "h": h, "dep": dep, "cap": h["cap"]}
+            order.append(key)
+        r["subs"] += 1
+        r["tasks"] += n
+        r["dep"] = r["dep"] and dep
+    return [rows[k] for k in order]
+
+
+def print_resources(dest, cp):
+    plan = resource_plan(dest)
+    print("\nRESOURCES  (what this campaign asks the scheduler for, read from the prepared scripts)")
+    if not plan:
+        print("  not available: dest is not prepared, or submit_all.sh has a form this summary does not parse")
+        return
+    print(f"  {'what':46} {'submissions':>11} {'tasks':>6} {'cores/task':>10} {'memory/task':>12} {'walltime/task':>14}")
+    tot_sub = tot_tasks = 0
+    core_h = peak = 0.0
+    wait_note = None
+    for r in plan:
+        h = r["h"]
+        if r["role"].startswith("analysis"):
+            wait_note = (r, h)
+            tot_sub += r["subs"]
+            tot_tasks += r["tasks"]
+            print(f"  {r['role'][:46]:46} {r['subs']:>11} {r['tasks']:>6} {h['cores']:>10} {h['mem']:>12} {h['time']:>14}")
+            continue
+        print(f"  {r['role'][:46]:46} {r['subs']:>11} {r['tasks']:>6} {h['cores']:>10} {h['mem']:>12} {h['time']:>14}")
+        tot_sub += r["subs"]
+        tot_tasks += r["tasks"]
+        core_h += r["tasks"] * h["cores"] * walltime_hours(h["time"])
+        if not r["dep"]:
+            at_once = min(r["tasks"], r["cap"] * r["subs"]) if r["cap"] else r["tasks"]
+            peak += at_once * h["cores"]
+    print(f"\n  Submitted jobs: {tot_sub}.   Scheduler tasks (these count against a per-user queue limit; array tasks count one each): {tot_tasks}.")
+    print(f"  Cores in use at the same time, at most: {peak:g}  (everything that does not wait for another job, if the cluster has that many free cores).")
+    print(f"  Upper bound of core-hours: {core_h:,.0f}  (tasks x cores x REQUESTED walltime, analysis job excluded). It is a ceiling, not a forecast: jobs usually end before their walltime.")
+    if wait_note:
+        r, h = wait_note
+        print(f"  The analysis job holds {h['cores']} core for up to {h['time']} while it waits for the campaign; it does no computing.")
+    roles = " ".join(r["role"] for r in plan)
+    if "shards" in " ".join(r["role"] for r in plan):
+        print("  For scale, the authors' notes (docs/COLLIDER_WORKFLOW.md) report, for one 80 x 153 x 143 grid (ATLAS 8 TeV W): w_pert about 3 h, Legacy about 16 h serial per full grid, resbos about 4 min per 25 M events.")
+    print("\n  How it runs:")
+    step = 1
+    if "shards" in roles:
+        print(f"  {step}. Shard arrays (w_pert, w_asym and each Legacy pass) are submitted together and run in parallel; each array has a 1-core merge job that starts when all its shards finish."); step += 1
+        if "get_yk_new" in roles:
+            print(f"  {step}. get_yk_new (one job per boson, 1 core) starts when w_pert, w_asym and the Legacy Y pass are merged."); step += 1
+        if "resbos" in roles:
+            print(f"  {step}. resbos (one job per cut set and piece, 1 core: the VEGAS generator is serial) starts when get_yk_new and the Legacy main grid are merged."); step += 1
+    if "Legacy, one task per table row" in roles:
+        cap = next((r["cap"] for r in plan if r["role"].startswith("Legacy, one task")), None)
+        print(f"  {step}. One Legacy array task per table row" + (f", at most {cap} at a time (the array throttle)" if cap else "") + "; their merge job starts when all rows are done."); step += 1
+        if "GetFixed" in roles:
+            gf = next(r for r in plan if r["role"] == "ResBos2 GetFixed")
+            print(f"  {step}. ResBos2 GetFixed runs at the same time, as one job with {gf['h']['cores']} cores."); step += 1
+        print(f"  {step}. The final job (getnlo + K-factor table) starts when the merge and GetFixed are done."); step += 1
+    print("\n  If this is more than you want to use (the decision is yours):")
+    mode = cp.get("campaign", "mode", fallback="collider")
+    if mode == "fixedtarget":
+        print("   - [fixedtarget] throttle = N      fewer rows at the same time (fewer cores at once; the same total work, it just takes longer).\n"
+              "   - a smaller table                 fewer measured points = fewer tasks and less total work.\n"
+              "   - [campaign] compute              drop pieces you do not need (the K-factor table needs LO, NLO and resNLO).")
+    else:
+        print("   - [shards] legacy / w_pert / w_asym   fewer shards = fewer tasks and cores at once. The total work is the same, so each task runs longer\n"
+              "                                          (check it fits the walltime and [scheduler] max_time). There is no throttle for shard arrays.\n"
+              "   - [campaign] processes                fewer bosons: every boson is a full chain.\n"
+              "   - [campaign] compute                  resNLO only needs 2 Legacy passes and 1 resbos run per cut set; adding NLO needs 4 passes and 3 runs.\n"
+              "   - [grids] active                      a narrower Q, qT or y range = fewer points = less total work.\n"
+              "   - [resbos] runs / vegas               fewer cut sets, or a shorter VEGAS run.")
+    print("   After changing the .ini, prepare again (run_process.py ... --reuse) and review this section again; a changed .ini needs a new approval.")
+
+
 def cmd_show(args):
     ini = os.path.abspath(args.ini)
     cp = load_ini(ini)
@@ -216,9 +401,10 @@ def cmd_show(args):
         print(f"    accounts:   {fmt(acct)}")
         print(f"    qos:        {fmt(qos)}")
         print(f"    walltimes:  {fmt(times)}")
-        print(f"  array tasks in total (shards + --array lines): {arrays}   (compare with the site's queue limit; each task counts)")
         if not acct and cp.has_section("scheduler") is False:
             warns.append("no account in any script; many sites require one")
+    if h is not None:
+        print_resources(dest, cp)
     af = approval_file(ini)
     print("\nAPPROVAL")
     if not os.path.isfile(af):
@@ -236,6 +422,16 @@ def cmd_show(args):
     if args.full:
         print("\n===== .ini =====")
         print(open(ini).read())
+    return 0
+
+
+def cmd_resources(args):
+    ini = os.path.abspath(args.ini)
+    cp = load_ini(ini)
+    dest = dest_of(ini, cp)
+    if dest_hash(dest) is None:
+        sys.exit("ERROR: dest is not prepared (no submit_all.sh). Run  python3 run_process.py <ini>  first.")
+    print_resources(dest, cp)
     return 0
 
 
@@ -295,6 +491,9 @@ def main():
     s.add_argument("ini")
     s.add_argument("--full", action="store_true", help="also print the .ini")
     s.set_defaults(fn=cmd_show)
+    s = sub.add_parser("resources")
+    s.add_argument("ini")
+    s.set_defaults(fn=cmd_resources)
     s = sub.add_parser("approve")
     s.add_argument("ini")
     s.add_argument("--yes-i-reviewed", action="store_true")

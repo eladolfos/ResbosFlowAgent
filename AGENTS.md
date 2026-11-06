@@ -18,7 +18,7 @@ environment and scheduler, run a preflight job, optionally a small test campaign
    on their cluster, run `adapt-scheduler` so the generated scripts use their partition, account and modules.
 3. **Pick the procedure from `skills/`**, the concrete case from `recipes/`, the invariants from `rules/`. Read the rule files that the skill names before acting.
 4. **Prepare, review, authorize, then submit.** `python3 run_process.py <ini>` only prepares a campaign. Before anything is submitted, run the `review-and-authorize` skill: the user
-   confirms where files are read and written, sees the `.ini` and what the scripts will send, and authorizes that campaign. Submit only with `scripts/campaign_review.py submit`;
+   confirms where files are read and written, sees the `.ini`, how many jobs and cores it will use and how they run (and can choose fewer), and authorizes that campaign. Submit only with `scripts/campaign_review.py submit`;
    never `run_process.py --submit`, `bash submit_all.sh` or `sbatch` directly. (`rules/approval_before_submit.md`)
 5. **Do not poll the cluster.** Do not loop over `squeue` or SSH to watch jobs (`remote.py` also enforces a rate limit). Check once when the user asks, or when a job is expected to be done. (`rules/cluster_etiquette.md`)
 6. **Report faithfully.** If a check fails, show the output. If something was not verified, say so. A recipe marked `unvalidated` is not a result.
@@ -67,6 +67,7 @@ python3 run_process.py local/<campaign>.ini                  # prepare only: wri
 python3 run_process.py local/<campaign>.ini --reuse          # refresh .in files and scripts of an existing dest
 python3 run_process.py local/<campaign>.ini --resbos-only    # (collider) prepare only the resbos runs of a finished campaign
 python3 scripts/campaign_review.py show local/<campaign>.ini     # where it reads/writes, environment, scheduler, what the scripts send
+python3 scripts/campaign_review.py resources local/<campaign>.ini  # jobs, tasks, cores, memory, walltime, how they chain, how to reduce
 python3 scripts/campaign_review.py approve local/<campaign>.ini --yes-i-reviewed   # records the user's authorization (hash of .ini and scripts)
 python3 scripts/campaign_review.py submit local/<campaign>.ini     # submits only if the approval matches
 python3 scripts/validate_campaign.py <dest>                  # post-run check of a collider campaign
