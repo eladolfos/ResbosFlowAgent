@@ -76,6 +76,7 @@ python3 scripts/validate_campaign.py <dest>                  # post-run check of
 
 ## Where the knowledge is
 
+- What it can compute (orders, processes, datasets, what must be installed for each): `docs/CAPABILITIES.md`. Do not offer anything outside it.
 - Which code does what and how they chain: `docs/COLLIDER_WORKFLOW.md`, `docs/FIXED_TARGET_WORKFLOW.md`.
 - Every `.ini` key and the failure table: `docs/CAMPAIGNS.md` and the comments inside `examples/*.ini`.
 - What the event generator reads: `docs/RESBOS_ROOT.md`.

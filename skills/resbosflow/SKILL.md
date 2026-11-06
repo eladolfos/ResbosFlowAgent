@@ -12,8 +12,18 @@ Read first: `AGENTS.md`, `rules/approval_before_submit.md`, `rules/cluster_etiqu
 
 ## Step 0 - greet and ask
 
-Say, briefly:
+Read `docs/CAPABILITIES.md` first; the menu below must match it. Say, briefly:
 - what this does: reviews their ResBos installation and paths, checks that jobs can start with their scheduler settings, then (if they want) runs a small test;
+- **what it can compute** (show this menu, adapting the wording to their language, keeping the names in English):
+
+  | | |
+  |---|---|
+  | Orders | `NLO` (fixed order), `resNLO` (CSS resummed, W321, matched to NLO), `LO` (fixed target); `NNLO` only if they provide `R_Ai` tables |
+  | Collider (Drell-Yan type) | W+, W-, Z0, photon (A0), Z/gamma* (ZU + ZD); pp at 5.02, 7, 8, 13 TeV and ppbar at 1.8, 1.96 TeV (other energies on request); any installed LHAPDF set; (Q, qT, y) grids and Monte Carlo events (`.root`) |
+  | Fixed-target Drell-Yan | E605 (p+Cu), E866 (pp and pd/pp), E906/SeaQuest (pd/pp): LO, NLO, resNLO per measured point and K-factors |
+  | Not available | W432, the fixed-xF refinement, anything else (for example Higgs): say so, do not improvise |
+
+  Mention the two caveats that matter to numbers: Z0 comes out ~2x too large (known, not fixed), and results are `unvalidated` until they reproduce a reference on the user's installation;
 - what it will not do: build or install anything, or submit anything without their yes;
 - one question: **"Do you want me to review your software and paths now?"** Offer to skip to a specific task if they already have an environment profile (`local/env.md`).
 
@@ -27,6 +37,7 @@ If `local/env.md` already exists, show its date and ask whether to re-review or 
 ## Step 2 - what they have
 
 Ask, one message, all at once:
+0. What do they want to compute (collider or fixed target, which processes or dataset, which orders)? It decides which executables are needed (the table "What you must have installed" in `docs/CAPABILITIES.md`), so check only those.
 1. Which ResBos codes do they have and where (folder of the five Legacy-family executables; ResBos2 `GetFixed` and its env script if they want fixed target)?
 2. LHAPDF/HOPPET/ROOT prefixes if they are not on the default `PATH`, and the PDF set they want.
 3. Where to write results (a scratch folder with room; see `docs/CAMPAIGNS.md` for sizes). **The user chooses `dest`.**

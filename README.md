@@ -10,6 +10,8 @@ You do not build anything from this repository: your executables, LHAPDF, HOPPET
 - `ResbosFlowAI` — the launcher;
 - `run_process.py`, `scripts/`, `templates/`, `examples/` — the deterministic toolchain the assistant calls (copied from ResbosFlow, see `docs/SOURCE.md`).
 
+**What it can compute:** orders `NLO`, `resNLO` (and `LO` for fixed target); collider W+, W-, Z0, photon, Z/gamma* in pp and ppbar; fixed-target Drell-Yan (E605, E866, E906). See `docs/CAPABILITIES.md`.
+
 The assistant chooses and runs the scripts and explains the result. It does not calculate physics itself.
 
 Start with `QUICKSTART.md`: run `./ResbosFlowAI`, and the assistant asks whether you want your software and paths reviewed, then sends a test.

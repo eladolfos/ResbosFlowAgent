@@ -66,7 +66,7 @@ if [ -f "$CONF" ]; then
   if ssh -O check "$ALIAS" >/dev/null 2>&1; then say "SSH connection to '$ALIAS': open."; fi
 fi
 
-PROMPT="Start the ResbosFlowAgent onboarding: follow the skill 'resbosflow'. Greet me in one or two sentences, say in three lines what you will do, and ask whether I want you to review my software and paths now. Do not run anything on the cluster until I answer."
+PROMPT="Start the ResbosFlowAgent onboarding: follow the skill 'resbosflow'. Greet me in one or two sentences, say in three lines what you will do, show the short menu of what you can compute (orders NLO, resNLO, LO; collider W/Z/photon; fixed-target Drell-Yan; from docs/CAPABILITIES.md), and ask whether I want you to review my software and paths now. Do not run anything on the cluster until I answer."
 say ""
 say "Starting the assistant ($AGENT)..."
 exec "$AGENT" "$PROMPT"

@@ -9,6 +9,17 @@ Nothing is built or installed on the cluster. About 15 minutes the first time.
 - On the cluster: Python 3 and `rsync`, plus your own ResBos executables and libraries.
 - A batch script that works on your cluster (any one you normally submit): the assistant adapts the campaign scripts from it.
 
+## What it can compute
+
+| | |
+|---|---|
+| Orders | `NLO` (fixed order), `resNLO` (CSS resummed, "W321", matched to NLO), `LO` (fixed target); `NNLO` only if you supply `R_Ai` tables |
+| Collider, Drell-Yan type | W+, W-, Z0, photon (A0), Z/gamma* (ZU + ZD) in pp (5.02, 7, 8, 13 TeV) and ppbar (1.8, 1.96 TeV); other energies on request; any LHAPDF set installed; (Q, qT, y) grids and Monte Carlo events (`.root`) |
+| Fixed-target Drell-Yan | E605 (p+Cu), E866 (pp and pd/pp), E906/SeaQuest (pd/pp): LO, NLO, resNLO at each measured point, plus K-factors |
+| Not available | W432, the fixed-xF refinement, other processes (for example Higgs) |
+
+Details, what you must have installed for each, and known issues: `docs/CAPABILITIES.md`.
+
 ## 1. Set up (once)
 
 ```sh
@@ -29,7 +40,7 @@ Whenever the SSH connection is closed it offers to open it: **you** type the pas
 
 ## 3. What the assistant does
 
-It greets you and asks: **"Do you want me to review your software and paths now?"** If you say yes, it goes through these steps, asking before each one that changes anything:
+It greets you, shows the menu above, and asks: **"Do you want me to review your software and paths now?"** If you say yes, it goes through these steps, asking before each one that changes anything:
 
 1. **Connection and toolchain** (`remote.py status`, `sync`): copies the Python scripts and templates to the cluster; nothing else is installed.
 2. **What you have:** it asks where your ResBos executables are, which LHAPDF/HOPPET/ROOT and PDF set you use, where to write results (you choose), and for a batch script that works on your cluster.
@@ -61,4 +72,4 @@ Say *"Add a recipe for `<what you want to compute>`"* (skill `add-recipe`). Your
 This toolchain has been run on one cluster (the authors'). On a second installation, remote mode, the launcher, the preflight job, the scheduler adaptation, the small test campaign (never run yet; its wall time is unknown) and the compatibility of your ResBos builds are untested: expect to find
 things, and read `docs/LIMITATIONS.md` first. What the assistant reads (paths, module lists, logs) is sent to the model provider; check that your site allows it.
 
-More: `README.md`, `AGENTS.md`, `docs/REMOTE.md`, `rules/`, `skills/`, `recipes/`.
+More: `docs/CAPABILITIES.md`, `README.md`, `AGENTS.md`, `docs/REMOTE.md`, `rules/`, `skills/`, `recipes/`.
