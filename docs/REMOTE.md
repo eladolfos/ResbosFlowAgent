@@ -43,7 +43,7 @@ Nothing is installed on the cluster by hand: `sync` copies the toolchain (Python
 
 ## Each session
 
-The launcher `./ResbosFlowIA` does steps 1 and 2 for you (it writes `local/remote.conf` the first time, offers to open the connection, and starts the assistant). The manual way:
+The launcher `./ResbosFlowAI` does steps 1 and 2 for you (it writes `local/remote.conf` the first time, offers to open the connection, and starts the assistant). The manual way:
 
 1. **Open the connection yourself**, in a terminal (password, passphrase or 2FA are typed here, not to the agent):
 

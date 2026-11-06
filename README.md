@@ -7,12 +7,12 @@ You do not build anything from this repository: your executables, LHAPDF, HOPPET
 - `rules/` — the invariants that silently break results if violated;
 - `skills/` — procedures: `resbosflow` (onboarding), `discover-environment`, `adapt-scheduler`, `new-collider-campaign`, `new-fixedtarget-campaign`, `review-and-authorize`, `validate-and-diagnose`, `add-recipe`;
 - `recipes/` — concrete calculations and how far each one is validated;
-- `ResbosFlowIA` — the launcher;
+- `ResbosFlowAI` — the launcher;
 - `run_process.py`, `scripts/`, `templates/`, `examples/` — the deterministic toolchain the assistant calls (copied from ResbosFlow, see `docs/SOURCE.md`).
 
 The assistant chooses and runs the scripts and explains the result. It does not calculate physics itself.
 
-Start with `QUICKSTART.md`: run `./ResbosFlowIA`, and the assistant asks whether you want your software and paths reviewed, then sends a test.
+Start with `QUICKSTART.md`: run `./ResbosFlowAI`, and the assistant asks whether you want your software and paths reviewed, then sends a test.
 
 ## Use
 

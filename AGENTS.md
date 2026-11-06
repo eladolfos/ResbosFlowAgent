@@ -6,7 +6,7 @@ This repository contains no compiled code and no physics sources. It contains ru
 
 ## Starting a session
 
-The user starts the assistant with the launcher `./ResbosFlowIA` (or `/resbosflow` inside Claude Code), which runs the onboarding skill `resbosflow`: greet, ask whether to review the software and paths, set up the
+The user starts the assistant with the launcher `./ResbosFlowAI` (or `/resbosflow` inside Claude Code), which runs the onboarding skill `resbosflow`: greet, ask whether to review the software and paths, set up the
 environment and scheduler, run a preflight job, optionally a small test campaign. If a session starts without a specific task and `local/env.md` does not exist, offer that onboarding in one sentence and wait for the answer.
 
 ## How to work
@@ -53,7 +53,7 @@ environment and scheduler, run a preflight job, optionally a small test campaign
 | `examples/` | Complete campaign `.ini` files (relative paths resolve against this folder, so they point to `../templates` and `../scripts`). |
 | `templates/` | Steering files (`.in`), grids and data tables the driver copies from. |
 | `scripts/` | Sharding, merging, validation, fixed-target integration, `campaign_review.py` (path map, approval, gated submit), `remote.py` (laptop-to-cluster channel), `collect_env.sh` (read-only environment report), `preflight.py` (a short job that checks the installation on a compute node). Deterministic. |
-| `ResbosFlowIA` | Launcher: checks tools, sets up remote mode, helps the user open the SSH connection, starts the assistant with the onboarding. |
+| `ResbosFlowAI` | Launcher: checks tools, sets up remote mode, helps the user open the SSH connection, starts the assistant with the onboarding. |
 | `run_process.py` | The campaign driver (`mode = collider` or `mode = fixedtarget`). |
 | `docs/` | Reference notes on the workflows and the physics. Read them before explaining or changing a workflow. `docs/LIMITATIONS.md` lists what does not work yet. |
 | `local/` | The user's own files (git-ignored): `env.md`, `remote.conf`, campaign `.ini`, `approvals/`. Put campaign `.ini` files directly in `local/` so `../templates` and `../scripts` resolve. |

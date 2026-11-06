@@ -12,8 +12,8 @@ Nothing is built or installed on the cluster. About 15 minutes the first time.
 ## 1. Set up (once)
 
 ```sh
-git clone <repository URL> && cd ResbosFlowAgent
-ln -s "$PWD/ResbosFlowIA" ~/.local/bin/ResbosFlowIA      # optional: start it from any folder
+git clone https://github.com/eladolfos/ResbosFlowAgent.git && cd ResbosFlowAgent
+ln -s "$PWD/ResbosFlowAI" ~/.local/bin/ResbosFlowAI      # optional: start it from any folder
 ```
 
 Add the SSH block from `docs/REMOTE.md` to `~/.ssh/config` (your user name, your gateway and node, `ControlMaster auto`, `ControlPath`, `ControlPersist 30m`). That is all you configure by hand.
@@ -21,7 +21,7 @@ Add the SSH block from `docs/REMOTE.md` to `~/.ssh/config` (your user name, your
 ## 2. Start
 
 ```sh
-ResbosFlowIA               # or ./ResbosFlowIA from the repository folder
+ResbosFlowAI               # or ./ResbosFlowAI from the repository folder
 ```
 
 The first time it asks whether your jobs run on a cluster you reach over SSH (the usual case) or on this machine, and for the SSH alias and a folder on the cluster. It writes `local/remote.conf` for you.
@@ -50,7 +50,7 @@ Say *"Add a recipe for `<what you want to compute>`"* (skill `add-recipe`). Your
 
 | You see | Do |
 |---|---|
-| `no open connection` | run `ResbosFlowIA` again, or `ssh -fN <alias>` (the connection closes after 30 idle minutes) |
+| `no open connection` | run `ResbosFlowAI` again, or `ssh -fN <alias>` (the connection closes after 30 idle minutes) |
 | `rate limit` | wait the seconds shown; do not ask for many single checks |
 | `REFUSED` | the command is not on the allow list; run it yourself or ask for it to be added deliberately |
 | a refusal to submit | the `.ini` or the scripts changed after you approved; review and approve again |

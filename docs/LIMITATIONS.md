@@ -34,7 +34,7 @@ walltime ceiling and unknown-key rejection. The assistant can prepare and inspec
 
 ## Onboarding, preflight and the smoke test
 
-- `ResbosFlowIA` (launcher), `scripts/preflight.py` and the skill `resbosflow` were tested with fake `claude`, `ssh` and `sbatch` and with simulated LHAPDF/ROOT tools (PASS and FAIL paths). Not used on the real HPCC.
+- `ResbosFlowAI` (launcher), `scripts/preflight.py` and the skill `resbosflow` were tested with fake `claude`, `ssh` and `sbatch` and with simulated LHAPDF/ROOT tools (PASS and FAIL paths). Not used on the real HPCC.
 - The preflight job checks that files exist, shared libraries resolve (`ldd`; the executables are not run), the PDF set is listed by `lhapdf ls --installed`, ROOT/numpy are visible and the folder for `dest` is writable.
   It cannot detect a build that links fine but is incompatible with the `.in` formats, or wrong physics.
 - `recipes/smoke-test-collider.md` / `examples/smoke_collider_Wp_13TeV.ini` prepare correctly (24 array tasks, two Legacy passes) but **have never been run**: wall time, disk use and whether `resbos` is happy with only three Q points are unknown.

@@ -1,6 +1,6 @@
 ---
 name: resbosflow
-description: Onboarding of ResbosFlowAgent - greet the user, offer to review their software and paths, set up the environment and scheduler, run a preflight job and then a small test campaign. Use at the start of a session started by the ResbosFlowIA launcher, when local/env.md does not exist, when the user types /resbosflow, or when they ask to get started, check the installation or run a test.
+description: Onboarding of ResbosFlowAgent - greet the user, offer to review their software and paths, set up the environment and scheduler, run a preflight job and then a small test campaign. Use at the start of a session started by the ResbosFlowAI launcher, when local/env.md does not exist, when the user types /resbosflow, or when they ask to get started, check the installation or run a test.
 ---
 
 # resbosflow
@@ -21,7 +21,7 @@ If `local/env.md` already exists, show its date and ask whether to re-review or 
 
 ## Step 1 - connection and toolchain
 
-- Local mode: skip. Remote mode (`local/remote.conf`): `python3 scripts/remote.py status`. If the connection is closed, ask the user to open it (`ssh -fN <alias>` in their terminal, or rerun `ResbosFlowIA`) and stop until they say it is open.
+- Local mode: skip. Remote mode (`local/remote.conf`): `python3 scripts/remote.py status`. If the connection is closed, ask the user to open it (`ssh -fN <alias>` in their terminal, or rerun `ResbosFlowAI`) and stop until they say it is open.
 - If the toolchain on the cluster is missing or different: `python3 scripts/remote.py sync`.
 
 ## Step 2 - what they have

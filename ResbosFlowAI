@@ -1,12 +1,12 @@
 #!/bin/bash
-# ResbosFlowIA -- start the ResbosFlowAgent assistant.
+# ResbosFlowAI -- start the ResbosFlowAgent assistant.
 #
-# Run it from anywhere (put a link on your PATH once:  ln -s "$PWD/ResbosFlowIA" ~/.local/bin/ResbosFlowIA).
+# Run it from anywhere (put a link on your PATH once:  ln -s "$PWD/ResbosFlowAI" ~/.local/bin/ResbosFlowAI).
 # It checks that the tools are there, sets up remote mode if you use a cluster over SSH, helps you open the SSH connection
 # (you type the password/passphrase/2FA in THIS terminal, never to the assistant), and starts the assistant with the
 # onboarding: it asks whether you want your software and paths reviewed, and then sends a test.
 #
-# Environment: RESBOSFLOWIA_AGENT=<command>  start another agent than `claude` (it must read AGENTS.md).
+# Environment: RESBOSFLOWAI_AGENT=<command>  start another agent than `claude` (it must read AGENTS.md).
 
 SRC="${BASH_SOURCE[0]}"
 while [ -L "$SRC" ]; do
@@ -14,16 +14,16 @@ while [ -L "$SRC" ]; do
 done
 REPO="$(cd -P "$(dirname "$SRC")" && pwd)"
 cd "$REPO" || exit 1
-AGENT="${RESBOSFLOWIA_AGENT:-claude}"
+AGENT="${RESBOSFLOWAI_AGENT:-claude}"
 CONF="$REPO/local/remote.conf"
 
 say()  { printf '%s\n' "$*"; }
-need() { command -v "$1" >/dev/null 2>&1 || { say "ResbosFlowIA: '$1' not found. $2"; MISSING=1; }; }
+need() { command -v "$1" >/dev/null 2>&1 || { say "ResbosFlowAI: '$1' not found. $2"; MISSING=1; }; }
 
-say "ResbosFlowIA  ($REPO)"
+say "ResbosFlowAI  ($REPO)"
 MISSING=0
 need python3 "Install Python 3."
-need "$AGENT" "Install Claude Code (https://claude.com/claude-code), or set RESBOSFLOWIA_AGENT to another agent that reads AGENTS.md."
+need "$AGENT" "Install Claude Code (https://claude.com/claude-code), or set RESBOSFLOWAI_AGENT to another agent that reads AGENTS.md."
 [ "$MISSING" -eq 0 ] || exit 1
 
 # --- mode: remote (laptop -> cluster over SSH) or local (this machine has the scheduler)
@@ -39,7 +39,7 @@ if [ ! -f "$CONF" ]; then
     say ""
     say "Remote mode needs an alias in ~/.ssh/config with ControlMaster (see docs/REMOTE.md)."
     read -r -p "SSH alias of the node where you run jobs (for example msu-dev): " ALIAS
-    if ! [[ "$ALIAS" =~ ^[A-Za-z0-9_.-]+$ ]]; then say "ResbosFlowIA: the alias must be a name from ~/.ssh/config (letters, digits . _ -)."; exit 1; fi
+    if ! [[ "$ALIAS" =~ ^[A-Za-z0-9_.-]+$ ]]; then say "ResbosFlowAI: the alias must be a name from ~/.ssh/config (letters, digits . _ -)."; exit 1; fi
     read -r -p "Folder on the cluster for the toolchain [~/ResbosFlowAgent]: " RREPO; RREPO="${RREPO:-~/ResbosFlowAgent}"
     printf '[remote]\nhost = %s\nrepo = %s\n' "$ALIAS" "$RREPO" > "$CONF"
     say "Wrote $CONF"
@@ -51,14 +51,14 @@ fi
 # --- remote mode: make sure the user's SSH connection is open
 if [ -f "$CONF" ]; then
   ALIAS="$(sed -n 's/^host *= *\([^ #]*\).*/\1/p' "$CONF" | head -1)"
-  if [ -z "$ALIAS" ]; then say "ResbosFlowIA: $CONF has no host."; exit 1; fi
+  if [ -z "$ALIAS" ]; then say "ResbosFlowAI: $CONF has no host."; exit 1; fi
   if ! ssh -O check "$ALIAS" >/dev/null 2>&1; then
     say ""
     say "The SSH connection to '$ALIAS' is not open."
     say "Opening it now. Type your password / passphrase / 2FA here; the assistant never sees it."
     read -r -p "Open it? [Y/n]: " YN
     if [ "${YN:-Y}" != "n" ] && [ "${YN:-Y}" != "N" ]; then
-      ssh -fN "$ALIAS" || { say "ResbosFlowIA: could not open the connection. Check ~/.ssh/config (docs/REMOTE.md) and try 'ssh -fN $ALIAS' by hand."; exit 1; }
+      ssh -fN "$ALIAS" || { say "ResbosFlowAI: could not open the connection. Check ~/.ssh/config (docs/REMOTE.md) and try 'ssh -fN $ALIAS' by hand."; exit 1; }
     else
       say "Not opened. The assistant will start, but it cannot reach the cluster until you run:  ssh -fN $ALIAS"
     fi
