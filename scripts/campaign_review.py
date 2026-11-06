@@ -19,6 +19,7 @@ import argparse
 import configparser
 import datetime
 import getpass
+import glob
 import hashlib
 import json
 import os
@@ -301,28 +302,171 @@ def print_resources(dest, cp):
     roles = " ".join(r["role"] for r in plan)
     if "shards" in " ".join(r["role"] for r in plan):
         print("  For scale, the authors' notes (docs/COLLIDER_WORKFLOW.md) report, for one 80 x 153 x 143 grid (ATLAS 8 TeV W): w_pert about 3 h, Legacy about 16 h serial per full grid, resbos about 4 min per 25 M events.")
+
+
+
+# ---- execution plan, read from the dependency lines of submit_all.sh
+BOSON_RE = r"(Wp|Wm|Z0|A0|ZU|ZD)"
+
+
+def _node_info(var, script):
+    """(title, what it is) for a node of submit_all.sh."""
+    v = var or ""
+    b = os.path.basename(script or "")
+    table = [
+        (r"^M_W_PERT_", "w_pert", "fixed-order piece (Arnold-Reno)"),
+        (r"^M_W_ASYM_", "w_asym", "asymptotic expansion of the cross section"),
+        (r"^M_LEGACY_Y_", "Legacy pass Y (LTO=3)", "Y piece: fixed order minus the asymptotic part"),
+        (r"^M_LEGACY_MAIN_", "Legacy pass main (LTO=0)", "the CSS resummed grid"),
+        (r"^M_LEGACY_DSI_", "Legacy pass dsi (LTO=1)", "DeltaSigma, the piece below qT_Sep"),
+        (r"^M_LEGACY_ASY_", "Legacy pass asy (LTO=2)", "asymptotic piece"),
+        (r"^YK_", "get_yk_new", "builds the Yk grid (the high-qT matching) from the Y piece"),
+    ]
+    for pat, title, what in table:
+        if re.match(pat, v):
+            return title, what
+    for suf, title, what in (("_resNLO.sb", "resbos resNLO", "event generation, resummed and matched to NLO"),
+                             ("_nloasy.sb", "resbos nloasy", "events for qT above qT_Sep"),
+                             ("_nlodsi.sb", "resbos nlodsi", "events for qT below qT_Sep"),
+                             ("_NLO.sb", "hadd", "adds the nloasy and nlodsi ntuples into the _NLO.root")):
+        if b.endswith(suf):
+            return title, what
+    if v.startswith("ASY_"):
+        return "resbos nloasy", "events for qT above qT_Sep"
+    if v.startswith("DSI_"):
+        return "resbos nlodsi", "events for qT below qT_Sep"
+    return (v or b or "job"), ""
+
+
+def _boson_of(*names):
+    for n in names:
+        m = re.search(r"(?:^|_)" + BOSON_RE + r"(?:_|$|\.)", n or "")
+        if m:
+            return m.group(1)
+    return None
+
+
+def dependency_graph(dest):
+    """nodes: {key: dict(var, script, shards, deps, boson)} from the sbatch lines of submit_all.sh."""
+    sa = os.path.join(dest, "submit_all.sh")
+    nodes, order = {}, []
+    if not os.path.isfile(sa):
+        return nodes, order
+    for line in open(sa).read().splitlines():
+        m = re.match(r'^(\w+)=\$\(run_shards\s+"([^"]+)"\s+submit_(\S+)_array\.sh\s+(\S+)\s+(\d+)\)', line)
+        if m:
+            var, d, label, job, n = m.groups()
+            nodes[var] = {"var": var, "script": f"run_{label}_array.sb", "shards": int(n), "deps": [], "boson": _boson_of(var, job)}
+            order.append(var)
+            continue
+        m = re.search(r'sbatch\s+((?:--\S+\s+)*)"?([^\s")]+\.sb)"?', line)
+        if not m:
+            continue
+        opts, script = m.group(1), m.group(2)
+        v = re.match(r"^(\w+)=\$\(", line)
+        key = v.group(1) if v else os.path.basename(script)
+        deps = re.findall(r"\$\{?(\w+)\}?", "".join(re.findall(r"--dependency=afterok:(\S+)", opts)))
+        nodes[key] = {"var": v.group(1) if v else "", "script": script, "shards": None, "deps": deps, "boson": _boson_of(key, script)}
+        order.append(key)
+    return nodes, order
+
+
+def print_plan(dest, cp):
+    mode = cp.get("campaign", "mode", fallback="collider")
+    plan = resource_plan(dest)
+    roles = " ".join(r["role"] for r in plan)
     print("\n  How it runs:")
-    step = 1
-    if "shards" in roles:
-        print(f"  {step}. Shard arrays (w_pert, w_asym and each Legacy pass) are submitted together and run in parallel; each array has a 1-core merge job that starts when all its shards finish."); step += 1
-        if "get_yk_new" in roles:
-            print(f"  {step}. get_yk_new (one job per boson, 1 core) starts when w_pert, w_asym and the Legacy Y pass are merged."); step += 1
-        if "resbos" in roles:
-            print(f"  {step}. resbos (one job per cut set and piece, 1 core: the VEGAS generator is serial) starts when get_yk_new and the Legacy main grid are merged."); step += 1
-    if "Legacy, one task per table row" in roles:
+    if mode == "fixedtarget":
         cap = next((r["cap"] for r in plan if r["role"].startswith("Legacy, one task")), None)
-        print(f"  {step}. One Legacy array task per table row" + (f", at most {cap} at a time (the array throttle)" if cap else "") + "; their merge job starts when all rows are done."); step += 1
+        step = 1
+        if "Legacy, one task per table row" in roles:
+            print(f"  {step}. One Legacy array task per table row" + (f", at most {cap} at a time (the array throttle)" if cap else "") + "; their merge job starts when all rows are done."); step += 1
         if "GetFixed" in roles:
             gf = next(r for r in plan if r["role"] == "ResBos2 GetFixed")
-            print(f"  {step}. ResBos2 GetFixed runs at the same time, as one job with {gf['h']['cores']} cores."); step += 1
-        print(f"  {step}. The final job (getnlo + K-factor table) starts when the merge and GetFixed are done."); step += 1
-    print("\n  If this is more than you want to use (the decision is yours):")
+            print(f"  {step}. ResBos2 GetFixed runs at the same time, as one job with {gf['h']['cores']} cores (it does not wait for the Legacy rows)."); step += 1
+        print(f"  {step}. The final job (getnlo + K-factor table) starts when the merge and GetFixed are done.")
+        return
+    nodes, order = dependency_graph(dest)
+    if not nodes:
+        print("  (the dependency lines of submit_all.sh could not be read)")
+        return
+    bosons = []
+    for k in order:
+        b = nodes[k]["boson"]
+        if b and b not in bosons:
+            bosons.append(b)
+    first = bosons[0] if bosons else None
+    sel = [k for k in order if nodes[k]["boson"] == first] if first else order
+    sel = [k for k in sel if os.path.basename(nodes[k]["script"]) != "analysis.sb"]
+    level = {}
+
+    def lvl(k, seen=()):
+        if k in level:
+            return level[k]
+        deps = [d for d in nodes[k]["deps"] if d in nodes and d not in seen]
+        level[k] = 0 if not deps else 1 + max(lvl(d, seen + (k,)) for d in deps)
+        return level[k]
+
+    for k in sel:
+        lvl(k)
+    head = f"  Shown for boson {first}" if first else "  Shown for the first chain"
+    if len(bosons) > 1:
+        head += f"; the other chain{'s' if len(bosons) > 2 else ''} ({', '.join(bosons[1:])}) {'have' if len(bosons) > 2 else 'has'} the same steps and {'do' if len(bosons) > 2 else 'does'} not wait for the others."
+    print(head)
+    names = {k: _node_info(nodes[k]["var"], nodes[k]["script"])[0] for k in nodes}
+    for step in range(0, (max(level.values()) + 1) if level else 0):
+        items = [k for k in sel if level.get(k) == step]
+        if not items:
+            continue
+        print(f"  Step {step + 1}" + ("  - start at the same time (they need nothing from each other):" if step == 0 else "  - each starts when the jobs it needs have finished OK:"))
+        for k in items:
+            n = nodes[k]
+            title, what = _node_info(n["var"], n["script"])
+            extra = f" ({n['shards']} shards, each array ends with a 1-core merge)" if n["shards"] else ""
+            wait = f"   [needs: {', '.join(names[d] for d in n['deps'] if d in names)}]" if n["deps"] else ""
+            print(f"     - {title}{extra}: {what}{wait}")
+    print("  If a job fails, the jobs that depend on it are cancelled (--kill-on-invalid-dep); independent branches keep running.")
+
+    order_v = (cp.get("campaign", "order", fallback="NLO") or "NLO").split("#")[0].strip()
+    compute = (cp.get("campaign", "compute", fallback="") or "").split("#")[0]
+    yk_scripts = glob.glob(os.path.join(dest, "get_yk_new", "run_get_yk_new_*.sb"))
+    ytext = open(yk_scripts[0], errors="replace").read() if yk_scripts else ""
+    print("\n  What is real and what is a placeholder at this order:")
+    if not yk_scripts:
+        print("   - get_yk_new is not part of this campaign (compute has no resNLO): w_pert, w_asym and the Yk grid are not needed, and nothing is a placeholder.")
+    else:
+        if "make_dummy_rai.py" in ytext:
+            print(f"   - R_Ai table (angular coefficients of the decay): a PLACEHOLDER of all ones, written inside the get_yk_new job by make_dummy_rai.py. At order = {order_v} get_yk_new does not use it;\n"
+                  "     a real table is needed only for NNLO ([get_yk_new] r_ai_<tag>).")
+        if "_wpa_placeholders" in ytext:
+            print("   - w_pert and w_asym outputs: PLACEHOLDERS with the Legacy Y points, written inside the get_yk_new job (skip_pert_asym = yes). Their jobs are not run. At order = NLO get_yk_new only checks that the (Q, qT, y)\n"
+                  "     points match Legacy's Y piece, so the Yk is the same (the authors checked it byte for byte on E253 files; docs/CAMPAIGNS.md).")
+        elif order_v == "NLO":
+            wp = [r for r in plan if r["role"] in ("w_pert shards", "merge of the w_pert shards", "w_asym shards", "merge of the w_asym shards")]
+            tasks = sum(r["tasks"] for r in wp)
+            print(f"   - w_pert and w_asym are REALLY computed here ({tasks} scheduler tasks), but at order = NLO get_yk_new does not use their values: it only checks that their (Q, qT, y) points match Legacy's Y piece.\n"
+                  "     [get_yk_new] skip_pert_asym = yes replaces them with placeholders, drops these jobs and the wait for w_pert (about 3 h in the authors' notes), and gives the same Yk (docs/CAMPAIGNS.md). Your decision.")
+        else:
+            print("   - w_pert and w_asym are really used at NNLO (they replace Singular and Pert in the Yk); nothing is skipped.")
+    if "NLO" in [c.strip() for c in compute.split(",")]:
+        print("   - resbos nlodsi takes no Y grid (\"-\"): the piece has none by construction; it is not a placeholder.")
+    if cp.get("campaign", "w_grid", fallback="legacy").split("#")[0].strip() == "resbos2":
+        print("   - The resummed main grid comes from ResBos2 arrays instead of the Legacy main pass (docs/COLLIDER_RESBOS2_W_WORKFLOW.md): read the dependency list above.")
+
+
+def print_levers(dest, cp):
     mode = cp.get("campaign", "mode", fallback="collider")
+    print("\n  If this is more than you want to use (the decision is yours):")
     if mode == "fixedtarget":
         print("   - [fixedtarget] throttle = N      fewer rows at the same time (fewer cores at once; the same total work, it just takes longer).\n"
               "   - a smaller table                 fewer measured points = fewer tasks and less total work.\n"
               "   - [campaign] compute              drop pieces you do not need (the K-factor table needs LO, NLO and resNLO).")
     else:
+        yk = glob.glob(os.path.join(dest, "get_yk_new", "run_get_yk_new_*.sb"))
+        ytext = open(yk[0], errors="replace").read() if yk else ""
+        order_v = (cp.get("campaign", "order", fallback="NLO") or "NLO").split("#")[0].strip()
+        if yk and order_v == "NLO" and "_wpa_placeholders" not in ytext:
+            print("   - [get_yk_new] skip_pert_asym = yes   drops the w_pert and w_asym jobs (their values are not used at order = NLO); same Yk in the authors' tests (docs/CAMPAIGNS.md). The largest saving that does not cut the calculation.")
         print("   - [shards] legacy / w_pert / w_asym   fewer shards = fewer tasks and cores at once. The total work is the same, so each task runs longer\n"
               "                                          (check it fits the walltime and [scheduler] max_time). There is no throttle for shard arrays.\n"
               "   - [campaign] processes                fewer bosons: every boson is a full chain.\n"
@@ -330,6 +474,13 @@ def print_resources(dest, cp):
               "   - [grids] active                      a narrower Q, qT or y range = fewer points = less total work.\n"
               "   - [resbos] runs / vegas               fewer cut sets, or a shorter VEGAS run.")
     print("   After changing the .ini, prepare again (run_process.py ... --reuse) and review this section again; a changed .ini needs a new approval.")
+
+
+def print_all(dest, cp):
+    print_resources(dest, cp)
+    if resource_plan(dest):
+        print_plan(dest, cp)
+        print_levers(dest, cp)
 
 
 def cmd_show(args):
@@ -404,7 +555,7 @@ def cmd_show(args):
         if not acct and cp.has_section("scheduler") is False:
             warns.append("no account in any script; many sites require one")
     if h is not None:
-        print_resources(dest, cp)
+        print_all(dest, cp)
     af = approval_file(ini)
     print("\nAPPROVAL")
     if not os.path.isfile(af):
@@ -431,7 +582,7 @@ def cmd_resources(args):
     dest = dest_of(ini, cp)
     if dest_hash(dest) is None:
         sys.exit("ERROR: dest is not prepared (no submit_all.sh). Run  python3 run_process.py <ini>  first.")
-    print_resources(dest, cp)
+    print_all(dest, cp)
     return 0
 
 

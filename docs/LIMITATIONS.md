@@ -32,7 +32,7 @@ walltime ceiling and unknown-key rejection. The assistant can prepare and inspec
   `bash -lc` defining `module` on the node, and `rsync` on both ends.
 - The allow list is a guard rail; the `.claude/settings.json` deny rules only bind Claude Code's own shell tool. Output the agent reads is sent to the model provider (`docs/REMOTE.md`).
 - `scripts/ssh_check.py` was tested with a throw-away home folder, the real local `ssh -G`, a fake `ssh` and unit checks of the error classification; never against a real cluster. The connection test is `BatchMode`: it cannot answer password/2FA, so many sites will report `AUTH`/`CLOSED` even when SSH works interactively; with `ProxyJump`, OpenSSH hides the jump host's own error, so the jump host must be tested alone.
-- The RESOURCES summary (`campaign_review.py resources`) is read from the generated scripts and `submit_all.sh`; it was checked on one collider and one fixed-target example. The core-hour figure is a ceiling from requested walltimes (the driver's defaults, not measurements).
+- The RESOURCES summary and the execution plan (`campaign_review.py resources`: steps, what waits for what, placeholders) are read from the generated scripts and the dependency lines of `submit_all.sh`; it was checked on one collider and one fixed-target example. The core-hour figure is a ceiling from requested walltimes (the driver's defaults, not measurements).
   Shard arrays have no throttle; a form of `submit_all.sh` it cannot parse (for example some ResBos2-W or experimental-point layouts) shows "not available" rather than a wrong number.
 - Approval records live on the cluster (next to `dest`), not on the laptop.
 - `sync` copies files but does not delete removed ones on the cluster.
@@ -42,7 +42,7 @@ walltime ceiling and unknown-key rejection. The assistant can prepare and inspec
 - `ResbosFlowAI` (launcher), `scripts/preflight.py` and the skill `resbosflow` were tested with fake `claude`, `ssh` and `sbatch` and with simulated LHAPDF/ROOT tools (PASS and FAIL paths). Not used on the real HPCC.
 - The preflight job checks that files exist, shared libraries resolve (`ldd`; the executables are not run), the PDF set is listed by `lhapdf ls --installed`, ROOT/numpy are visible and the folder for `dest` is writable.
   It cannot detect a build that links fine but is incompatible with the `.in` formats, or wrong physics.
-- `recipes/smoke-test-collider.md` / `examples/smoke_collider_Wp_13TeV.ini` prepare correctly (24 array tasks, two Legacy passes) but **have never been run**: wall time, disk use and whether `resbos` is happy with only three Q points are unknown.
+- `recipes/smoke-test-collider.md` / `examples/smoke_collider_Wp_13TeV.ini` prepare correctly (24 shard tasks, 31 scheduler tasks in total, two Legacy passes) but **have never been run**: wall time, disk use and whether `resbos` is happy with only three Q points are unknown.
   The authors should run it once and record the numbers before handing the repository to someone else.
 
 ## Physics and numerics

@@ -73,7 +73,7 @@ It greets you, shows the menu above, and asks: **"Do you want me to review your 
    It tells you what is found, what is missing and what it could not verify.
 4. **Preflight job** (`preflight.py`): a ten-minute job with your scheduler settings that checks executables, shared libraries, LHAPDF and the PDF set, ROOT, numpy and write access. It runs no ResBos code.
    You read the script, say yes, and tell the assistant when it has finished; it reads the PASS/FAIL result.
-5. **Small test campaign** (optional): W+ at 13 TeV, three Q points, short VEGAS run (`recipes/smoke-test-collider.md`). The assistant shows you where it reads and writes, how many jobs and cores it will use and how they run (you can ask for fewer), and what the scripts will request;
+5. **Small test campaign** (optional): W+ at 13 TeV, three Q points, short VEGAS run (`recipes/smoke-test-collider.md`). The assistant shows you where it reads and writes, how many jobs and cores it will use, which jobs run together and which wait for others' outputs, which files are placeholders at your order (you can ask for fewer jobs), and what the scripts will request;
    **nothing is submitted until you say yes to that campaign by name.** When the jobs finish, tell it and it validates the outputs.
 
 After that you can ask for your own work: *"Prepare W+ and W- at 8 TeV with my PDF"*. Each campaign goes through the same review and your authorization.

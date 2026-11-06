@@ -29,7 +29,7 @@ Remote mode (`local/remote.conf` exists): edit the `.ini` on the laptop, `python
    - `[shards]`: number of Q shards for `legacy`, `w_pert`, `w_asym`. `resbos` is never sharded (VEGAS). Check the user's queue limits first (`rules/cluster_etiquette.md`).
    - `[resbos]` and `[cuts.<name>]` for events.
 4. **Prepare** (no submit): `python3 run_process.py local/<name>.ini`. Read the resolved inputs it prints to the user: executables, `.in` templates, grids, shard counts, Q range.
-5. **Review and authorize**: run the `review-and-authorize` skill (path map, `.ini`, partition/account/walltimes, and the RESOURCES section: how many jobs, tasks and cores, how they chain; ask whether the user wants fewer, e.g. fewer `[shards]`, one boson or `compute = resNLO`). If the scheduler or modules differ from the
+5. **Review and authorize**: run the `review-and-authorize` skill (path map, `.ini`, partition/account/walltimes, and the RESOURCES section: how many jobs, tasks and cores, how they chain; explain which jobs run in parallel, which wait for others and which files are placeholders at this order; ask whether the user wants fewer jobs, e.g. `skip_pert_asym = yes` at `order = NLO`, fewer `[shards]`, one boson or `compute = resNLO`). If the scheduler or modules differ from the
    author's, run `adapt-scheduler` first.
 6. **Submit only after approval**: `python3 scripts/campaign_review.py submit local/<name>.ini`. Jobs are chained with `--dependency=afterok`. Never `--submit` or `sbatch` directly.
 7. **Record**: note the campaign in `local/` (name, `dest`, date, job ids if the user gives them). Do not poll.

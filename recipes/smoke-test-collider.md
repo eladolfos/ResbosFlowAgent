@@ -15,9 +15,13 @@ It tests that the chain runs and its files have the right shape. It is **not** a
 ## Inputs
 - Process and energy: W+, pp 13 TeV (`[legacy] ibeam = 1`), `order = NLO`, `compute = resNLO`.
 - Grid: template `13TeV_WpWm`, full qT (153) and y (155) grids, Q indices 10-12 (82, 85, 87 GeV): 3 x 153 x 155 = 71,145 points.
-- Shards: `legacy = 10` (two passes, `_Y` and `_main`), `w_pert = 2`, `w_asym = 2`. 24 array tasks in total.
+- Shards: `legacy = 10` (two passes, `_Y` and `_main`), `w_pert = 2`, `w_asym = 2`. 24 shard tasks, 31 scheduler tasks in total (adding the merge jobs, `get_yk_new`, `resbos` and the analysis job; `campaign_review.py resources` lists them).
 - Events: one `resbos` run, `nocuts`, VEGAS `1,5,3000,5,3000` (a few 10^4 events).
 - Campaign `.ini`: `examples/smoke_collider_Wp_13TeV.ini`.
+
+## Option: fewer jobs
+`[get_yk_new] skip_pert_asym = yes` drops the `w_pert` and `w_asym` jobs (31 tasks become 25; their values are not used at `order = NLO`). The test then does not exercise those two executables, so keep the default if the goal is to
+test every code of the installation.
 
 ## Requirements
 The five Legacy-family executables, LHAPDF with the PDF set, HOPPET, ROOT, SLURM. Pass `scripts/preflight.py` first.
