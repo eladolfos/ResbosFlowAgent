@@ -26,6 +26,8 @@ walltime ceiling and unknown-key rejection. The assistant can prepare and inspec
 
 ## Remote mode (`scripts/remote.py`)
 
+- **Windows:** the laptop side is supported only inside WSL2 (Ubuntu); native Windows lacks `ControlMaster` and `rsync`. The WSL instructions (`QUICKSTART.md`, `docs/REMOTE.md`) have not been tested on a real Windows machine.
+
 - Tested only with a fake `ssh` (commands run in a local folder). Not used against the real HPCC yet: the assumptions are `ControlMaster`/`ControlPath` in `~/.ssh/config`, `ProxyJump` through the gateway,
   `bash -lc` defining `module` on the node, and `rsync` on both ends.
 - The allow list is a guard rail; the `.claude/settings.json` deny rules only bind Claude Code's own shell tool. Output the agent reads is sent to the model provider (`docs/REMOTE.md`).

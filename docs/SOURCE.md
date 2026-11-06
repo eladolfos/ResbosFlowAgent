@@ -30,5 +30,5 @@ These changes are not in ResbosFlow. To keep both drivers in step, port them the
 
 ## Added here (not from ResbosFlow)
 
-`ResbosFlowAI`, `QUICKSTART.md`, `scripts/campaign_review.py`, `scripts/remote.py`, `scripts/collect_env.sh`, `scripts/preflight.py`, `examples/smoke_collider_Wp_13TeV.ini`, `docs/REMOTE.md`, `.claude/settings.json`, `local/remote.example.conf`, everything under `rules/`, `skills/`, `recipes/`, `local/` and the top-level `AGENTS.md`, `CLAUDE.md`, `README.md`, `docs/LIMITATIONS.md`, `docs/SOURCE.md`, `docs/CAPABILITIES.md`;
+`ResbosFlowAI`, `.gitattributes`, `QUICKSTART.md`, `scripts/campaign_review.py`, `scripts/remote.py`, `scripts/collect_env.sh`, `scripts/preflight.py`, `examples/smoke_collider_Wp_13TeV.ini`, `docs/REMOTE.md`, `.claude/settings.json`, `local/remote.example.conf`, everything under `rules/`, `skills/`, `recipes/`, `local/` and the top-level `AGENTS.md`, `CLAUDE.md`, `README.md`, `docs/LIMITATIONS.md`, `docs/SOURCE.md`, `docs/CAPABILITIES.md`;
 the commented `[scheduler]` block at the end of each `examples/*.ini`.

@@ -5,9 +5,33 @@ Nothing is built or installed on the cluster. About 15 minutes the first time.
 
 ## You need
 
+**Windows:** do the "Windows" section below first. The assistant runs inside WSL2 (Ubuntu); the cluster is Linux as usual. macOS and Linux need nothing special.
+
 - On your laptop: `git`, Python 3, `ssh`, `rsync`, and [Claude Code](https://claude.com/claude-code) (or another agent that reads `AGENTS.md`).
 - On the cluster: Python 3 and `rsync`, plus your own ResBos executables and libraries.
 - A batch script that works on your cluster (any one you normally submit): the assistant adapts the campaign scripts from it.
+
+## Windows (once): run everything inside WSL2
+
+The launcher, the persistent SSH connection and `rsync` need Linux tools that Windows does not provide. WSL2 gives you an Ubuntu inside Windows; **the assistant, the repository and SSH all live there**. The cluster is not affected.
+You need administrator rights and virtualization enabled (on a university-managed PC, ask IT if the first command fails).
+
+1. PowerShell as administrator: `wsl --install -d Ubuntu`, then restart Windows and finish the Ubuntu user setup.
+2. Open **Ubuntu** (Windows Terminal has a tab for it). Everything below is typed there:
+   ```sh
+   sudo apt update && sudo apt install -y git python3 rsync openssh-client
+   ```
+3. Install Claude Code **inside Ubuntu**, following its Linux installation instructions (https://claude.com/claude-code). A Claude Code installed on Windows does not see WSL's SSH.
+4. Clone the repository **inside Ubuntu's own home** (`~/`), not under `/mnt/c/...` (slow, and it loses file permissions and the skills link):
+   ```sh
+   cd ~ && git clone https://github.com/eladolfos/ResbosFlowAgent.git
+   ```
+   Do not clone it with Git for Windows: it would break the symlink `.claude/skills` and the line endings.
+5. Ubuntu has its own `~/.ssh`, separate from Windows. Put the SSH block of `docs/REMOTE.md` in `~/.ssh/config` **in Ubuntu**. If you reuse a key from Windows, copy it into Ubuntu's `~/.ssh` and run `chmod 600 ~/.ssh/id_*` (SSH refuses keys with open permissions).
+6. Then follow the sections below, always in the Ubuntu tab: `~/ResbosFlowAgent/ResbosFlowAI`.
+
+Results stay on the cluster. If you need a file on Windows, it appears under `\\wsl$\Ubuntu\home\<you>\ResbosFlowAgent\local\remote_files` after a `pull`.
+Not tested on a real Windows machine by the authors: report what you find.
 
 ## What it can compute
 

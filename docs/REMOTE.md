@@ -41,6 +41,17 @@ Nothing is installed on the cluster by hand: `sync` copies the toolchain (Python
 
 2. **Repo config.** `cp local/remote.example.conf local/remote.conf` and set `host` (the alias, `msu-dev`) and `repo` (folder on the cluster, for example `~/ResbosFlowAgent`).
 
+## Windows
+
+The laptop side needs `ssh` with connection multiplexing (`ControlMaster`), `rsync` and bash. As far as we know the Windows OpenSSH client has no `ControlMaster`, and Windows has no `rsync`, so **run the whole laptop side inside WSL2**
+(Ubuntu): Claude Code, the repository, `ssh`, `rsync` and `~/.ssh/config` all live in WSL. The steps are in `QUICKSTART.md` ("Windows"). Points that matter:
+
+- Clone the repository inside WSL's home (`~/ResbosFlowAgent`), not under `/mnt/c`; the symlink `.claude/skills` and the file permissions need a Linux file system. `.gitattributes` forces LF line endings so a clone made by mistake with Git for Windows
+  does not send CRLF scripts to the cluster (they fail with `bash\r: No such file or directory`), but a Windows clone still breaks the symlink.
+- WSL has its own `~/.ssh`. Keys must have mode 600 (`chmod 600 ~/.ssh/id_*`).
+- Open the SSH connection (`ssh -fN <alias>`, or let `ResbosFlowAI` do it) from the Ubuntu terminal, so the socket exists where `remote.py` looks for it.
+- If the first `wsl --install` fails, virtualization is off in the BIOS or the PC is managed: ask IT. A native Windows alternative (a Python process that holds the connection instead of `ControlMaster`) is not written.
+
 ## Each session
 
 The launcher `./ResbosFlowAI` does steps 1 and 2 for you (it writes `local/remote.conf` the first time, offers to open the connection, and starts the assistant). The manual way:
@@ -103,6 +114,7 @@ Limits and records:
 | `rate limit` (exit 4) | wait the seconds it prints; use `collect_env.sh` instead of many single queries; ask the user whether jobs finished instead of calling `queue` |
 | `REFUSED` (exit 5) | the command is not on the list; ask the user to run it, or extend `check_allowed` in `remote.py` on purpose |
 | `status`: toolchain NOT INSTALLED / DIFFERENT | `python3 scripts/remote.py sync` |
+| `bash\r: No such file or directory` on the cluster | a script reached the cluster with Windows line endings: clone again inside WSL; `.gitattributes` prevents it in new clones |
 | `rsync: command not found` on the cluster | `rsync` is needed on both ends; ask the site or use `scp` by hand for the first copy |
 | `module: command not found` in a remote command | the site's login shell does not define `module`; report it in `local/env.md`: the job scripts need it |
 

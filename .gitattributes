@@ -1,0 +1,19 @@
+# Everything is checked out with Unix line endings, also on Windows: the scripts are run on a Linux cluster,
+# and a CRLF in a .sb, .sh or .py file breaks the job ("bash\r: No such file or directory").
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.sb   text eol=lf
+*.py   text eol=lf
+*.md   text eol=lf
+*.ini  text eol=lf
+*.in   text eol=lf
+*.inp  text eol=lf
+*.C    text eol=lf
+ResbosFlowAI text eol=lf
+
+*.root binary
+*.pdf  binary
+*.png  binary
+*.zip  binary
+*.gz   binary
